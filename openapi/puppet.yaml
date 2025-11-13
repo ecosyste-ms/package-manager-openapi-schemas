@@ -1,0 +1,155 @@
+openapi: 3.0.3
+info:
+  title: Puppet Forge API
+  description: |
+    Puppet Forge API for Puppet modules.
+
+    Package repository for Puppet configuration management modules.
+  version: 3.0.0
+  contact:
+    name: Puppet Forge
+    url: https://forgeapi.puppet.com/
+  license:
+    name: Apache License 2.0
+
+servers:
+  - url: https://forgeapi.puppet.com/v3
+    description: Puppet Forge API v3
+
+paths:
+  /modules:
+    get:
+      summary: List modules
+      operationId: listModules
+      tags:
+        - Modules
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Module list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModuleSummary'
+
+  /modules/{slug}:
+    get:
+      summary: Get module metadata
+      operationId: getModule
+      tags:
+        - Modules
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Module slug (owner-name format)
+          schema:
+            type: string
+          example: puppetlabs-apache
+      responses:
+        '200':
+          description: Module metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Module'
+
+  /releases/{slug}-{version}:
+    get:
+      summary: Get release details
+      operationId: getRelease
+      tags:
+        - Releases
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Release details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Release'
+
+components:
+  schemas:
+    ModuleSummary:
+      type: object
+      properties:
+        slug:
+          type: string
+          example: puppetlabs-apache
+        name:
+          type: string
+        owner:
+          type: object
+          properties:
+            slug:
+              type: string
+
+    Module:
+      type: object
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        downloads:
+          type: integer
+        current_release:
+          type: object
+          properties:
+            version:
+              type: string
+            metadata:
+              type: object
+        releases:
+          type: array
+          items:
+            type: object
+        owner:
+          type: object
+
+    Release:
+      type: object
+      properties:
+        version:
+          type: string
+        metadata:
+          type: object
+        file_sha256:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+tags:
+  - name: Modules
+    description: Puppet modules
+  - name: Releases
+    description: Module releases

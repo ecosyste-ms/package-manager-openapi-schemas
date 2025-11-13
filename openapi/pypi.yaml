@@ -1,0 +1,555 @@
+openapi: 3.0.3
+info:
+  title: PyPI JSON API
+  description: |
+    The PyPI JSON API provides programmatic access to Python package metadata,
+    versions, and download statistics from the Python Package Index.
+
+    This schema is based on the actual API implementation used by https://packages.ecosyste.ms
+
+    **Base URLs:**
+    - JSON API: `https://pypi.org`
+    - Simple API: `https://pypi.org/simple` (PEP 503)
+    - RSS Feeds: `https://pypi.org/rss`
+    - Stats API: `https://pypistats.org/api`
+
+    **Authentication:** Not required for public packages
+
+    **Rate Limiting:** Not officially documented, please be respectful
+  version: 1.0.0
+  contact:
+    name: PyPI Support
+    url: https://pypi.org/help/
+  license:
+    name: Apache License 2.0
+
+servers:
+  - url: https://pypi.org
+    description: PyPI JSON API
+  - url: https://pypi.org/simple
+    description: PyPI Simple API (PEP 503)
+  - url: https://pypistats.org/api
+    description: PyPI Statistics API
+
+paths:
+  /pypi/{package}/json:
+    get:
+      summary: Get package metadata (latest version)
+      description: |
+        Retrieves complete metadata for the latest version of a package including
+        all releases, classifiers, and dependencies.
+      operationId: getPackage
+      tags:
+        - Packages
+      parameters:
+        - name: package
+          in: path
+          required: true
+          description: Package name (case-insensitive, normalized)
+          schema:
+            type: string
+          examples:
+            simple:
+              value: mkdocstrings
+              summary: Simple package name
+            normalized:
+              value: django-rest-framework
+              summary: Normalized name with dashes
+      responses:
+        '200':
+          description: Package metadata retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackageInfo'
+        '404':
+          description: Package not found
+
+  /pypi/{package}/{version}/json:
+    get:
+      summary: Get metadata for a specific version
+      description: |
+        Retrieves metadata for a specific version of a package including
+        dependencies and distribution files for that version.
+      operationId: getPackageVersion
+      tags:
+        - Packages
+      parameters:
+        - name: package
+          in: path
+          required: true
+          description: Package name
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          description: Version number (e.g., "1.2.3")
+          schema:
+            type: string
+          examples:
+            semantic:
+              value: "0.30.1"
+              summary: Semantic version
+      responses:
+        '200':
+          description: Version metadata retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackageInfo'
+        '404':
+          description: Package or version not found
+
+  /simple/:
+    get:
+      summary: List all package names
+      description: |
+        Returns an HTML page listing all available packages (PEP 503).
+        Use this to discover package names or build a local index.
+      operationId: listPackages
+      tags:
+        - Packages
+      servers:
+        - url: https://pypi.org/simple
+      responses:
+        '200':
+          description: HTML page with package links
+          content:
+            text/html:
+              schema:
+                type: string
+                format: html
+
+  /simple/{package}/:
+    get:
+      summary: Get package download links
+      description: |
+        Returns an HTML page with download links for all versions of a package (PEP 503).
+        Includes hashes for verification.
+      operationId: getPackageFiles
+      tags:
+        - Packages
+      servers:
+        - url: https://pypi.org/simple
+      parameters:
+        - name: package
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: HTML page with download links
+          content:
+            text/html:
+              schema:
+                type: string
+                format: html
+
+  /rss/updates.xml:
+    get:
+      summary: Get recently updated packages (RSS)
+      description: RSS feed of recently updated packages
+      operationId: getRecentUpdates
+      tags:
+        - Packages
+      responses:
+        '200':
+          description: RSS feed
+          content:
+            application/rss+xml:
+              schema:
+                type: string
+                format: xml
+
+  /rss/packages.xml:
+    get:
+      summary: Get recently created packages (RSS)
+      description: RSS feed of newly published packages
+      operationId: getRecentPackages
+      tags:
+        - Packages
+      responses:
+        '200':
+          description: RSS feed
+          content:
+            application/rss+xml:
+              schema:
+                type: string
+                format: xml
+
+  /packages/{package}/recent:
+    get:
+      summary: Get recent download statistics
+      description: |
+        Get download counts for the last month from pypistats.org.
+        Note: This endpoint is on a different domain (pypistats.org)
+      operationId: getRecentDownloads
+      servers:
+        - url: https://pypistats.org/api
+      tags:
+        - Statistics
+      parameters:
+        - name: package
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Package name (case-insensitive)
+      responses:
+        '200':
+          description: Download statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadStats'
+        '404':
+          description: Package not found
+
+components:
+  schemas:
+    PackageInfo:
+      type: object
+      description: Complete package metadata from PyPI
+      required:
+        - info
+        - releases
+      properties:
+        info:
+          $ref: '#/components/schemas/Info'
+        last_serial:
+          type: integer
+          description: Serial number of last change
+          example: 31343998
+        releases:
+          type: object
+          description: Map of version numbers to release files
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/ReleaseFile'
+          example:
+            "0.30.1":
+              - filename: mkdocstrings-0.30.1-py3-none-any.whl
+                packagetype: bdist_wheel
+                python_version: py3
+        urls:
+          type: array
+          description: Download URLs for the latest version
+          items:
+            $ref: '#/components/schemas/ReleaseFile'
+        vulnerabilities:
+          type: array
+          description: Known security vulnerabilities
+          items:
+            $ref: '#/components/schemas/Vulnerability'
+
+    Info:
+      type: object
+      description: Package metadata
+      required:
+        - name
+        - version
+      properties:
+        author:
+          type: string
+          description: Author name (legacy field, may be null)
+          nullable: true
+          example: null
+        author_email:
+          type: string
+          description: Author email with optional name (PEP 621 format)
+          example: "Timothée Mazzucotelli <dev@pawamoy.fr>"
+        bugtrack_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Bug tracker URL
+        classifiers:
+          type: array
+          description: Trove classifiers
+          items:
+            type: string
+          example:
+            - "Development Status :: 4 - Beta"
+            - "Programming Language :: Python :: 3"
+        description:
+          type: string
+          description: Package long description (README content, markdown/rst)
+          example: "# mkdocstrings\n\nAutomatic documentation from sources..."
+        description_content_type:
+          type: string
+          description: MIME type of description
+          enum:
+            - text/markdown
+            - text/x-rst
+            - text/plain
+          example: text/markdown
+        docs_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Documentation URL (legacy)
+        download_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Download URL (legacy)
+        downloads:
+          type: object
+          description: Download counts (deprecated, always -1)
+          properties:
+            last_day:
+              type: integer
+              example: -1
+            last_week:
+              type: integer
+              example: -1
+            last_month:
+              type: integer
+              example: -1
+        dynamic:
+          type: array
+          nullable: true
+          description: Dynamically determined fields (PEP 621)
+          items:
+            type: string
+        home_page:
+          type: string
+          format: uri
+          nullable: true
+          description: Project homepage URL
+          example: null
+        keywords:
+          type: string
+          description: Comma or space-separated keywords
+          example: "mkdocs, mkdocs-plugin, docstrings, autodoc, documentation"
+        license:
+          type: string
+          nullable: true
+          description: License name or SPDX expression
+          example: null
+        license_expression:
+          type: string
+          description: SPDX license expression (PEP 639)
+          example: ISC
+        license_files:
+          type: array
+          description: License file names
+          items:
+            type: string
+          example: ["LICENSE"]
+        maintainer:
+          type: string
+          nullable: true
+        maintainer_email:
+          type: string
+          nullable: true
+        name:
+          type: string
+          description: Package name (normalized to lowercase with dashes)
+          example: mkdocstrings
+        package_url:
+          type: string
+          format: uri
+          description: PyPI package page URL
+          example: https://pypi.org/project/mkdocstrings/
+        platform:
+          type: string
+          nullable: true
+          description: Platform compatibility
+        project_url:
+          type: string
+          format: uri
+          description: Project homepage
+          example: https://pypi.org/project/mkdocstrings/
+        project_urls:
+          type: object
+          description: Additional project URLs
+          additionalProperties:
+            type: string
+            format: uri
+          example:
+            Homepage: https://mkdocstrings.github.io
+            Documentation: https://mkdocstrings.github.io
+            Repository: https://github.com/mkdocstrings/mkdocstrings
+            Issues: https://github.com/mkdocstrings/mkdocstrings/issues
+            Changelog: https://mkdocstrings.github.io/changelog
+            Funding: https://github.com/sponsors/pawamoy
+        provides_extra:
+          type: array
+          description: Named optional dependency groups
+          items:
+            type: string
+          example: ["python", "crystal"]
+        release_url:
+          type: string
+          format: uri
+          description: URL for this specific release
+          example: https://pypi.org/project/mkdocstrings/0.30.1/
+        requires_dist:
+          type: array
+          description: Runtime dependencies (PEP 508 format)
+          items:
+            type: string
+          example:
+            - "Jinja2>=2.11.1"
+            - "Markdown>=3.6"
+            - "mkdocs>=1.6"
+            - "importlib-metadata>=4.6; python_version < \"3.10\""
+            - "mkdocstrings-python>=1.16.2; extra == \"python\""
+        requires_python:
+          type: string
+          description: Python version requirements
+          example: ">=3.9"
+        summary:
+          type: string
+          description: One-line package summary
+          example: "Automatic documentation from sources, for MkDocs."
+        version:
+          type: string
+          description: Package version number
+          example: "0.30.1"
+        yanked:
+          type: boolean
+          description: Whether this version is yanked
+          example: false
+        yanked_reason:
+          type: string
+          nullable: true
+          description: Reason for yanking
+
+    ReleaseFile:
+      type: object
+      description: Distribution file for a specific release
+      required:
+        - filename
+        - url
+        - digests
+      properties:
+        comment_text:
+          type: string
+          description: Optional comment
+          example: ""
+        digests:
+          type: object
+          description: File checksums
+          required:
+            - sha256
+          properties:
+            blake2b_256:
+              type: string
+              example: "e8a8528e0bfcb7da3d8f793d18fdbc053b806818bd50d45f230106f93016a8e5"
+            md5:
+              type: string
+              example: "1ecfe852d6f7c6b1bfacf7ac446b3c3c"
+            sha256:
+              type: string
+              example: "92196a319a325f8e3c5917c8d404ca8c7ac11a8965621eec4d26876c1d6928f0"
+        downloads:
+          type: integer
+          description: Download count (deprecated, always -1)
+          example: -1
+        filename:
+          type: string
+          description: File name
+          example: mkdocstrings-0.30.1-py3-none-any.whl
+        has_sig:
+          type: boolean
+          description: Whether PGP signature is available
+          example: false
+        md5_digest:
+          type: string
+          description: MD5 hash
+          example: "1ecfe852d6f7c6b1bfacf7ac446b3c3c"
+        packagetype:
+          type: string
+          description: Distribution type
+          enum:
+            - bdist_wheel
+            - sdist
+            - bdist_egg
+            - bdist_wininst
+          example: bdist_wheel
+        python_version:
+          type: string
+          description: Python version compatibility
+          example: py3
+        requires_python:
+          type: string
+          description: Python version requirements
+          example: ">=3.9"
+        size:
+          type: integer
+          description: File size in bytes
+          example: 30256
+        upload_time:
+          type: string
+          format: date-time
+          description: When the file was uploaded
+          example: "2019-03-06T15:06:40.387Z"
+        upload_time_iso_8601:
+          type: string
+          format: date-time
+          description: Upload time in ISO 8601 format
+        url:
+          type: string
+          format: uri
+          description: Download URL
+          example: https://files.pythonhosted.org/packages/.../mkdocstrings-0.30.1-py3-none-any.whl
+        yanked:
+          type: boolean
+          description: Whether this file is yanked
+          example: false
+        yanked_reason:
+          type: string
+          nullable: true
+          description: Reason for yanking
+
+    Vulnerability:
+      type: object
+      description: Security vulnerability information
+      properties:
+        id:
+          type: string
+          description: Vulnerability ID
+        details:
+          type: string
+          description: Vulnerability details
+        fixed_in:
+          type: array
+          description: Versions that fix the vulnerability
+          items:
+            type: string
+
+    DownloadStats:
+      type: object
+      description: Download statistics from pypistats.org
+      properties:
+        data:
+          type: object
+          properties:
+            last_day:
+              type: integer
+              description: Downloads in the last day
+            last_week:
+              type: integer
+              description: Downloads in the last week
+            last_month:
+              type: integer
+              description: Downloads in the last month
+              example: 1500000
+        package:
+          type: string
+          description: Package name
+        type:
+          type: string
+          description: Stat type
+          example: recent
+
+tags:
+  - name: Packages
+    description: Package metadata and discovery
+  - name: Statistics
+    description: Download statistics and metrics

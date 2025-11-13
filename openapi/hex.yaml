@@ -1,0 +1,537 @@
+openapi: 3.0.3
+info:
+  title: Hex.pm API
+  description: |
+    The Hex.pm API provides programmatic access to Elixir and Erlang package metadata,
+    versions, and download statistics.
+
+    This schema is based on the actual API implementation used by https://packages.ecosyste.ms
+
+    **Base URLs:**
+    - API: `https://hex.pm/api`
+    - Repository: `https://repo.hex.pm/tarballs`
+    - Documentation: `https://hexdocs.pm`
+
+    **Authentication:** API key required for publishing and some read operations
+
+    **Rate Limiting:** Apply polite rate limiting
+
+    **Official Documentation:** https://hex.pm/docs/api
+  version: 1.0.0
+  contact:
+    name: Hex.pm Support
+    url: https://hex.pm/docs/faq
+  license:
+    name: Apache License 2.0
+
+servers:
+  - url: https://hex.pm/api
+    description: Hex.pm API
+
+paths:
+  /packages:
+    get:
+      summary: List packages
+      description: |
+        Returns a paginated list of packages with metadata.
+        Supports sorting by various fields.
+      operationId: listPackages
+      tags:
+        - Packages
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-indexed)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: sort
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum:
+              - inserted_at
+              - updated_at
+              - downloads
+              - name
+            default: name
+      responses:
+        '200':
+          description: Package list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PackageSummary'
+
+  /packages/{name}:
+    get:
+      summary: Get package metadata
+      description: |
+        Retrieves complete metadata for a package including releases,
+        downloads, and links.
+      operationId: getPackage
+      tags:
+        - Packages
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Package name
+          schema:
+            type: string
+          examples:
+            phoenix:
+              value: phoenix
+              summary: Phoenix web framework
+            ecto:
+              value: ecto
+              summary: Database wrapper
+      responses:
+        '200':
+          description: Package metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+        '404':
+          description: Package not found
+
+  /packages/{name}/releases/{version}:
+    get:
+      summary: Get release details
+      description: |
+        Retrieves detailed information for a specific package version
+        including dependencies and checksums.
+      operationId: getRelease
+      tags:
+        - Releases
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          description: Semantic version
+          schema:
+            type: string
+          example: "1.7.0"
+      responses:
+        '200':
+          description: Release details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Release'
+        '404':
+          description: Package or version not found
+
+  /packages/{name}/owners:
+    get:
+      summary: Get package owners
+      description: Retrieves the list of users who can publish new versions
+      operationId: getOwners
+      tags:
+        - Owners
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Owner list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Owner'
+
+  /repos/{repository}/packages/{name}:
+    get:
+      summary: Get package from specific repository
+      description: |
+        Retrieves package metadata from a specific Hex repository.
+        Default repository is "hexpm".
+      operationId: getRepoPackage
+      tags:
+        - Repositories
+      parameters:
+        - name: repository
+          in: path
+          required: true
+          description: Repository name
+          schema:
+            type: string
+          example: hexpm
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Package metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+
+components:
+  schemas:
+    PackageSummary:
+      type: object
+      description: Abbreviated package information for lists
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Package name
+          example: phoenix
+        url:
+          type: string
+          format: uri
+          description: API URL for this package
+          example: https://hex.pm/api/packages/phoenix
+        html_url:
+          type: string
+          format: uri
+          description: Web page URL
+          example: https://hex.pm/packages/phoenix
+        docs_html_url:
+          type: string
+          format: uri
+          description: Documentation URL
+          example: https://hexdocs.pm/phoenix/
+        meta:
+          type: object
+          properties:
+            description:
+              type: string
+            licenses:
+              type: array
+              items:
+                type: string
+            links:
+              type: object
+              additionalProperties:
+                type: string
+                format: uri
+        downloads:
+          type: object
+          properties:
+            all:
+              type: integer
+              description: Total downloads
+            recent:
+              type: integer
+              description: Recent downloads
+            week:
+              type: integer
+              description: Downloads this week
+        inserted_at:
+          type: string
+          format: date-time
+          description: When package was first published
+        updated_at:
+          type: string
+          format: date-time
+          description: When package was last updated
+        latest_version:
+          type: string
+          description: Latest version number
+          example: "1.7.0"
+        latest_stable_version:
+          type: string
+          description: Latest stable (non-prerelease) version
+
+    Package:
+      type: object
+      description: Complete package metadata
+      required:
+        - name
+        - releases
+      properties:
+        name:
+          type: string
+          example: phoenix
+        url:
+          type: string
+          format: uri
+          example: https://hex.pm/api/packages/phoenix
+        html_url:
+          type: string
+          format: uri
+          example: https://hex.pm/packages/phoenix
+        docs_html_url:
+          type: string
+          format: uri
+          nullable: true
+          example: https://hexdocs.pm/phoenix/
+        meta:
+          $ref: '#/components/schemas/PackageMeta'
+        downloads:
+          type: object
+          properties:
+            all:
+              type: integer
+              example: 50000000
+            recent:
+              type: integer
+              description: Downloads in last 30 days
+            week:
+              type: integer
+        releases:
+          type: array
+          description: All published releases
+          items:
+            $ref: '#/components/schemas/ReleaseSummary'
+        owners:
+          type: array
+          description: Package owners/maintainers
+          items:
+            $ref: '#/components/schemas/Owner'
+        repository:
+          type: string
+          description: Repository name
+          example: hexpm
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        retirements:
+          type: object
+          description: Retired versions
+          additionalProperties:
+            $ref: '#/components/schemas/Retirement'
+        configs:
+          type: object
+          description: Installation configurations for different tools
+          properties:
+            mix.exs:
+              type: string
+              example: "{:phoenix, \"~> 1.7.0\"}"
+            rebar.config:
+              type: string
+            erlang.mk:
+              type: string
+
+    PackageMeta:
+      type: object
+      description: Package metadata and links
+      properties:
+        description:
+          type: string
+          example: Peace of mind from prototype to production
+        licenses:
+          type: array
+          items:
+            type: string
+          example: ["MIT"]
+        links:
+          type: object
+          description: Project links
+          additionalProperties:
+            type: string
+            format: uri
+          example:
+            GitHub: https://github.com/phoenixframework/phoenix
+            Changelog: https://hexdocs.pm/phoenix/changelog.html
+        maintainers:
+          type: array
+          description: Maintainer names
+          items:
+            type: string
+        app:
+          type: string
+          description: Application name
+        build_tools:
+          type: array
+          description: Build tools used
+          items:
+            type: string
+          example: ["mix"]
+        elixir:
+          type: string
+          description: Elixir version requirement
+          example: "~> 1.11"
+
+    ReleaseSummary:
+      type: object
+      description: Basic release information
+      properties:
+        version:
+          type: string
+          example: "1.7.0"
+        url:
+          type: string
+          format: uri
+          example: https://hex.pm/api/packages/phoenix/releases/1.7.0
+        has_docs:
+          type: boolean
+          description: Whether documentation is available
+        inserted_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    Release:
+      type: object
+      description: Detailed release information
+      required:
+        - version
+        - checksum
+      properties:
+        version:
+          type: string
+          example: "1.7.0"
+        checksum:
+          type: string
+          description: SHA256 checksum of the tarball
+          example: e2a8663260e1e6334b98160a8dafdd09d520e5955b12d4363b5e0231f7aa0a0b
+        has_docs:
+          type: boolean
+        url:
+          type: string
+          format: uri
+          example: https://hex.pm/api/packages/phoenix/releases/1.7.0
+        package_url:
+          type: string
+          format: uri
+          example: https://hex.pm/api/packages/phoenix
+        html_url:
+          type: string
+          format: uri
+          example: https://hex.pm/packages/phoenix/1.7.0
+        docs_html_url:
+          type: string
+          format: uri
+          nullable: true
+          example: https://hexdocs.pm/phoenix/1.7.0/
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        downloads:
+          type: integer
+          nullable: true
+          description: Download count for this version
+        meta:
+          type: object
+          properties:
+            app:
+              type: string
+            build_tools:
+              type: array
+              items:
+                type: string
+            elixir:
+              type: string
+              description: Required Elixir version
+        requirements:
+          type: object
+          description: Package dependencies
+          additionalProperties:
+            $ref: '#/components/schemas/Requirement'
+          example:
+            plug:
+              app: plug
+              optional: false
+              requirement: "~> 1.14"
+        retirement:
+          $ref: '#/components/schemas/Retirement'
+        publisher:
+          $ref: '#/components/schemas/Publisher'
+        configs:
+          type: object
+          description: Installation configurations
+          properties:
+            mix.exs:
+              type: string
+            rebar.config:
+              type: string
+            erlang.mk:
+              type: string
+
+    Requirement:
+      type: object
+      description: Package dependency specification
+      properties:
+        app:
+          type: string
+          description: Application name (may differ from package name)
+          example: plug
+        optional:
+          type: boolean
+          description: Whether dependency is optional
+          example: false
+        requirement:
+          type: string
+          description: Version requirement
+          example: "~> 1.14"
+        repository:
+          type: string
+          description: Repository name (if not hexpm)
+
+    Owner:
+      type: object
+      description: Package owner/maintainer
+      properties:
+        username:
+          type: string
+          example: josevalim
+        email:
+          type: string
+          format: email
+          nullable: true
+        url:
+          type: string
+          format: uri
+          example: https://hex.pm/api/users/josevalim
+
+    Publisher:
+      type: object
+      description: User who published a release
+      properties:
+        username:
+          type: string
+          example: josevalim
+        url:
+          type: string
+          format: uri
+          example: https://hex.pm/api/users/josevalim
+
+    Retirement:
+      type: object
+      description: Version retirement information
+      properties:
+        reason:
+          type: string
+          enum: [other, invalid, security, deprecated, renamed]
+          description: Retirement reason
+        message:
+          type: string
+          description: Additional retirement message
+
+tags:
+  - name: Packages
+    description: Package metadata and search
+  - name: Releases
+    description: Release versions and dependencies
+  - name: Owners
+    description: Package ownership
+  - name: Repositories
+    description: Hex repositories (hexpm, etc.)

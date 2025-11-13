@@ -1,0 +1,200 @@
+openapi: 3.0.3
+info:
+  title: WordPress.org Plugins API
+  description: |
+    WordPress.org API for plugins and themes.
+
+    Plugin and theme repository for WordPress.
+  version: 1.2.0
+  contact:
+    name: WordPress.org
+    url: https://wordpress.org/
+  license:
+    name: GPL-2.0
+
+servers:
+  - url: https://api.wordpress.org
+    description: WordPress.org API
+
+paths:
+  /plugins/info/1.2/:
+    get:
+      summary: Query plugins
+      operationId: queryPlugins
+      tags:
+        - Plugins
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [query_plugins, plugin_information]
+          example: query_plugins
+        - name: request[search]
+          in: query
+          description: Search term
+          schema:
+            type: string
+        - name: request[author]
+          in: query
+          description: Author slug
+          schema:
+            type: string
+        - name: request[tag]
+          in: query
+          description: Tag to filter by
+          schema:
+            type: string
+        - name: request[page]
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: request[per_page]
+          in: query
+          schema:
+            type: integer
+            default: 24
+      responses:
+        '200':
+          description: Plugin list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginQueryResponse'
+
+  /stats/plugin/1.0/downloads.php:
+    get:
+      summary: Get plugin download stats
+      operationId: getPluginStats
+      tags:
+        - Stats
+      parameters:
+        - name: slug
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Number of days
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Download statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: integer
+
+  /translations/plugins/1.0/:
+    get:
+      summary: Get plugin translations
+      operationId: getPluginTranslations
+      tags:
+        - Translations
+      parameters:
+        - name: slug
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Translation data
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  schemas:
+    PluginQueryResponse:
+      type: object
+      properties:
+        info:
+          type: object
+          properties:
+            page:
+              type: integer
+            pages:
+              type: integer
+            results:
+              type: integer
+        plugins:
+          type: array
+          items:
+            $ref: '#/components/schemas/Plugin'
+
+    Plugin:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        version:
+          type: string
+        author:
+          type: string
+        author_profile:
+          type: string
+          format: uri
+        requires:
+          type: string
+          description: Minimum WordPress version
+        tested:
+          type: string
+          description: Tested up to WordPress version
+        requires_php:
+          type: string
+        rating:
+          type: integer
+        ratings:
+          type: object
+        num_ratings:
+          type: integer
+        active_installs:
+          type: integer
+        downloaded:
+          type: integer
+        last_updated:
+          type: string
+          format: date-time
+        added:
+          type: string
+          format: date-time
+        homepage:
+          type: string
+          format: uri
+        short_description:
+          type: string
+        description:
+          type: string
+        download_link:
+          type: string
+          format: uri
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+        donate_link:
+          type: string
+          format: uri
+
+tags:
+  - name: Plugins
+    description: WordPress plugins
+  - name: Stats
+    description: Download statistics
+  - name: Translations
+    description: Plugin translations

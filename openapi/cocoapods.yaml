@@ -1,0 +1,139 @@
+openapi: 3.0.3
+info:
+  title: CocoaPods CDN API
+  description: |
+    CocoaPods CDN API for iOS/macOS package specifications.
+
+    CDN-based package repository for Cocoa dependencies.
+  version: 1.0.0
+  contact:
+    name: CocoaPods
+    url: https://cocoapods.org/
+  license:
+    name: MIT
+
+servers:
+  - url: https://cdn.cocoapods.org
+    description: CocoaPods CDN
+
+paths:
+  /all_pods.txt:
+    get:
+      summary: List all pod names
+      operationId: getAllPods
+      tags:
+        - Pods
+      responses:
+        '200':
+          description: Newline-separated list of pod names
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /all_pods_versions_{shard}.txt:
+    get:
+      summary: Get pod versions by shard
+      operationId: getPodVersions
+      tags:
+        - Pods
+      parameters:
+        - name: shard
+          in: path
+          required: true
+          description: Shard identifier (e.g., 1_3_5 from MD5 hash)
+          schema:
+            type: string
+          example: "1_3_5"
+      responses:
+        '200':
+          description: Pod versions
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /Specs/{char1}/{char2}/{char3}/{name}/{version}/{name}.podspec.json:
+    get:
+      summary: Get podspec file
+      operationId: getPodspec
+      tags:
+        - Specs
+      parameters:
+        - name: char1
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: char2
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: char3
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Podspec JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Podspec'
+
+components:
+  schemas:
+    Podspec:
+      type: object
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        license:
+          oneOf:
+            - type: string
+            - type: object
+        authors:
+          oneOf:
+            - type: string
+            - type: object
+        summary:
+          type: string
+        homepage:
+          type: string
+          format: uri
+        source:
+          type: object
+          properties:
+            git:
+              type: string
+              format: uri
+            tag:
+              type: string
+        platforms:
+          type: object
+        dependencies:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+tags:
+  - name: Pods
+    description: CocoaPods packages
+  - name: Specs
+    description: Podspec files

@@ -1,0 +1,534 @@
+openapi: 3.0.3
+info:
+  title: NPM Registry API
+  description: |
+    The NPM Registry API provides programmatic access to package metadata, versions,
+    dependencies, and download statistics from the NPM ecosystem.
+
+    This schema is based on the actual API implementation used by https://packages.ecosyste.ms
+
+    **Base URLs:**
+    - Registry API: `https://registry.npmjs.org`
+    - Downloads API: `https://api.npmjs.org`
+    - RSS Feed: `https://registry.npmjs.org/-/rss`
+
+    **Authentication:** Not required for public packages
+
+    **Rate Limiting:** Not officially documented, but recommended to use polite delays
+  version: 1.0.0
+  contact:
+    name: NPM Registry
+    url: https://www.npmjs.com/
+  license:
+    name: Artistic License 2.0
+    url: https://www.npmjs.com/policies/npm-license
+
+servers:
+  - url: https://registry.npmjs.org
+    description: NPM Registry API
+  - url: https://api.npmjs.org
+    description: NPM Downloads API
+
+paths:
+  /{package}:
+    get:
+      summary: Get package metadata
+      description: |
+        Retrieves complete metadata for a package including all versions, maintainers,
+        dependencies, and dist-tags. For scoped packages, use URL encoding (e.g., %2F for /).
+      operationId: getPackage
+      tags:
+        - Packages
+      parameters:
+        - name: package
+          in: path
+          required: true
+          description: |
+            Package name. For scoped packages, use format: @scope%2Fpackage
+            Examples:
+            - `base62`
+            - `@babel%2Fcore`
+          schema:
+            type: string
+          examples:
+            simple:
+              value: base62
+              summary: Simple package name
+            scoped:
+              value: "@babel%2Fcore"
+              summary: Scoped package (URL encoded)
+      responses:
+        '200':
+          description: Package metadata retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+              examples:
+                base62:
+                  summary: Example package metadata
+                  externalValue: https://registry.npmjs.org/base62
+        '404':
+          description: Package not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /-/rss:
+    get:
+      summary: Get recently updated packages (RSS)
+      description: Returns an RSS feed of recently updated packages
+      operationId: getRecentPackagesRSS
+      tags:
+        - Packages
+      parameters:
+        - name: descending
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Sort order
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+          description: Number of packages to return
+      responses:
+        '200':
+          description: RSS feed of recent packages
+          content:
+            application/rss+xml:
+              schema:
+                type: string
+                format: xml
+
+  /downloads/point/{period}/{package}:
+    get:
+      summary: Get download statistics
+      description: |
+        Get download counts for a specific package over a time period.
+        This endpoint is on api.npmjs.org, not registry.npmjs.org
+      operationId: getDownloads
+      servers:
+        - url: https://api.npmjs.org
+          description: NPM Downloads API
+      tags:
+        - Statistics
+      parameters:
+        - name: period
+          in: path
+          required: true
+          description: Time period for download stats
+          schema:
+            type: string
+            enum:
+              - last-day
+              - last-week
+              - last-month
+              - last-year
+          examples:
+            lastMonth:
+              value: last-month
+              summary: Downloads in the last month
+        - name: package
+          in: path
+          required: true
+          description: Package name (scoped packages should use @scope/package format)
+          schema:
+            type: string
+          examples:
+            simple:
+              value: base62
+      responses:
+        '200':
+          description: Download statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Downloads'
+              example:
+                downloads: 1076972
+                start: "2023-06-01"
+                end: "2023-06-30"
+                package: "base62"
+        '404':
+          description: Package not found
+
+components:
+  schemas:
+    Package:
+      type: object
+      description: Complete package metadata from NPM registry
+      required:
+        - _id
+        - name
+        - versions
+        - time
+      properties:
+        _id:
+          type: string
+          description: Package identifier (same as name)
+          example: base62
+        _rev:
+          type: string
+          description: CouchDB revision identifier
+          example: "30-6c1b05381e189529b713705a887fda25"
+        name:
+          type: string
+          description: Package name
+          example: base62
+        description:
+          type: string
+          description: Package description
+          example: JavaScript Base62 encode/decoder
+        dist-tags:
+          type: object
+          description: Distribution tags mapping to version numbers
+          additionalProperties:
+            type: string
+          example:
+            latest: "2.0.1"
+        versions:
+          type: object
+          description: Map of version numbers to version metadata
+          additionalProperties:
+            $ref: '#/components/schemas/Version'
+        time:
+          type: object
+          description: Timestamps for package events and version publications
+          properties:
+            created:
+              type: string
+              format: date-time
+              description: When the package was first published
+            modified:
+              type: string
+              format: date-time
+              description: When the package was last modified
+          additionalProperties:
+            type: string
+            format: date-time
+          example:
+            created: "2012-02-24T18:04:05.588Z"
+            modified: "2019-03-06T15:06:44.330Z"
+            "2.0.1": "2019-03-06T15:06:40.387Z"
+        maintainers:
+          type: array
+          description: Package maintainers with NPM access
+          items:
+            $ref: '#/components/schemas/Maintainer'
+        author:
+          $ref: '#/components/schemas/Person'
+        repository:
+          $ref: '#/components/schemas/Repository'
+        readme:
+          type: string
+          description: Package README content (markdown)
+        readmeFilename:
+          type: string
+          description: Name of the README file
+          example: Readme.md
+        homepage:
+          type: string
+          format: uri
+          description: Package homepage URL
+          example: https://github.com/base62/base62.js
+        keywords:
+          type: array
+          description: Package keywords for search
+          items:
+            type: string
+          example: ["base-62", "encoder", "decoder"]
+        bugs:
+          type: object
+          description: Bug tracker information
+          properties:
+            url:
+              type: string
+              format: uri
+              example: https://github.com/base62/base62.js/issues
+        license:
+          type: string
+          description: SPDX license identifier
+          example: MIT
+        users:
+          type: object
+          description: Users who have starred this package
+          additionalProperties:
+            type: boolean
+          example:
+            iolo: true
+
+    Version:
+      type: object
+      description: Metadata for a specific package version
+      required:
+        - name
+        - version
+        - _id
+        - dist
+      properties:
+        name:
+          type: string
+          description: Package name
+          example: base62
+        version:
+          type: string
+          description: Semantic version number
+          example: "2.0.1"
+        description:
+          type: string
+          example: JavaScript Base62 encode/decoder
+        _id:
+          type: string
+          description: Package identifier with version
+          example: "base62@2.0.1"
+        _npmVersion:
+          type: string
+          description: NPM version used to publish
+          example: "6.7.0"
+        _nodeVersion:
+          type: string
+          description: Node.js version used to publish
+          example: "11.10.1"
+        _npmUser:
+          $ref: '#/components/schemas/Maintainer'
+        dist:
+          $ref: '#/components/schemas/Distribution'
+        main:
+          type: string
+          description: Entry point file
+          example: ./lib/legacy.js
+        scripts:
+          type: object
+          description: NPM scripts
+          additionalProperties:
+            type: string
+          example:
+            test: mocha
+        engines:
+          type: object
+          description: Compatible engine versions
+          additionalProperties:
+            type: string
+          example:
+            node: ">=6.0.0"
+        dependencies:
+          type: object
+          description: Runtime dependencies
+          additionalProperties:
+            type: string
+          example:
+            lodash: "^4.17.21"
+        devDependencies:
+          type: object
+          description: Development dependencies
+          additionalProperties:
+            type: string
+          example:
+            mocha: "~6.0.2"
+        optionalDependencies:
+          type: object
+          description: Optional dependencies
+          additionalProperties:
+            type: string
+        peerDependencies:
+          type: object
+          description: Peer dependencies
+          additionalProperties:
+            type: string
+        keywords:
+          type: array
+          items:
+            type: string
+          example: ["base-62", "encoder", "decoder"]
+        license:
+          oneOf:
+            - type: string
+            - type: object
+              properties:
+                type:
+                  type: string
+                url:
+                  type: string
+                  format: uri
+          example: MIT
+        author:
+          $ref: '#/components/schemas/Person'
+        maintainers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Maintainer'
+        repository:
+          $ref: '#/components/schemas/Repository'
+        bugs:
+          type: object
+          properties:
+            url:
+              type: string
+              format: uri
+        homepage:
+          type: string
+          format: uri
+        deprecated:
+          oneOf:
+            - type: boolean
+            - type: string
+          description: Deprecation status or message
+        gitHead:
+          type: string
+          description: Git commit SHA used for this version
+          example: f99208bff69de2d8d11acfc9b1332d572fe2f4dd
+        _hasShrinkwrap:
+          type: boolean
+          description: Whether package has npm-shrinkwrap.json
+        directories:
+          type: object
+          description: Directory structure hints
+          additionalProperties: true
+        funding:
+          oneOf:
+            - type: string
+            - type: object
+              properties:
+                type:
+                  type: string
+                url:
+                  type: string
+                  format: uri
+            - type: array
+              items:
+                type: object
+        exports:
+          type: object
+          description: Package exports (ESM)
+          additionalProperties: true
+        browserify:
+          type: object
+          description: Browserify configuration
+          additionalProperties: true
+
+    Distribution:
+      type: object
+      description: Distribution metadata for downloading the package
+      required:
+        - tarball
+        - shasum
+      properties:
+        integrity:
+          type: string
+          description: Subresource Integrity hash (sha512 or sha1)
+          example: sha512-4t4WQK7mdbcWzqEBiq6tfo2qDCeIZGXvjifJZyxHIVcjQkZJxpFtu/pa2Va69OouCkg6izZ08hKnPxroeDyzew==
+        shasum:
+          type: string
+          description: SHA1 checksum (legacy)
+          example: 729cfe179ed34c61e4a489490105b44ce4ea1197
+        tarball:
+          type: string
+          format: uri
+          description: URL to download the .tgz archive
+          example: https://registry.npmjs.org/base62/-/base62-2.0.1.tgz
+        fileCount:
+          type: integer
+          description: Number of files in the package
+          example: 26
+        unpackedSize:
+          type: integer
+          description: Size in bytes when unpacked
+          example: 30256
+        npm-signature:
+          type: string
+          description: PGP signature for package verification
+
+    Maintainer:
+      type: object
+      description: Package maintainer or NPM user
+      required:
+        - name
+        - email
+      properties:
+        name:
+          type: string
+          description: NPM username
+          example: andrewnez
+        email:
+          type: string
+          format: email
+          example: andrewnez@gmail.com
+
+    Person:
+      type: object
+      description: Author or contributor information
+      properties:
+        name:
+          type: string
+          example: Andrew Nesbitt
+        email:
+          type: string
+          format: email
+          example: andrewnez@gmail.com
+        url:
+          type: string
+          format: uri
+          example: http://nesbitt.io
+
+    Repository:
+      type: object
+      description: Source code repository information
+      properties:
+        type:
+          type: string
+          example: git
+        url:
+          type: string
+          format: uri
+          example: git+https://github.com/base62/base62.js.git
+        directory:
+          type: string
+          description: Subdirectory for monorepos
+
+    Downloads:
+      type: object
+      description: Download statistics for a package
+      required:
+        - downloads
+        - package
+      properties:
+        downloads:
+          type: integer
+          description: Number of downloads in the period
+          example: 1076972
+        start:
+          type: string
+          format: date
+          description: Start date of the period
+          example: "2023-06-01"
+        end:
+          type: string
+          format: date
+          description: End date of the period
+          example: "2023-06-30"
+        package:
+          type: string
+          description: Package name
+          example: base62
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: Not found
+        reason:
+          type: string
+          description: Detailed reason for the error
+
+tags:
+  - name: Packages
+    description: Package metadata and search
+  - name: Statistics
+    description: Download statistics and metrics

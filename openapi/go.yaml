@@ -1,0 +1,297 @@
+openapi: 3.0.3
+info:
+  title: Go Module Proxy API
+  description: |
+    The Go Module Proxy API provides access to Go module metadata and downloads
+    using the Go module proxy protocol (GOPROXY).
+
+    This schema is based on the actual API implementation used by https://packages.ecosyste.ms
+
+    **Base URLs:**
+    - Module Proxy: `https://proxy.golang.org`
+    - Index: `https://index.golang.org`
+    - Package Documentation: `https://pkg.go.dev`
+
+    **Authentication:** Not required for public modules
+
+    **Key Concepts:**
+    - Module paths use domain/path format (e.g., github.com/gin-gonic/gin)
+    - Paths are case-encoded for the proxy (@v escapes uppercase to !lowercase)
+    - Versions follow semantic versioning with v prefix (e.g., v1.9.0)
+    - Pseudo-versions for commits: v0.0.0-20190404164418-38d8ce5564a5
+
+    **Official Documentation:** https://go.dev/ref/mod#goproxy-protocol
+  version: 1.0.0
+  contact:
+    name: Go Team
+    url: https://go.dev/help
+  license:
+    name: BSD-3-Clause
+
+servers:
+  - url: https://proxy.golang.org
+    description: Go Module Proxy
+  - url: https://index.golang.org
+    description: Go Module Index
+
+paths:
+  /{module}/@v/list:
+    get:
+      summary: List module versions
+      description: |
+        Returns a newline-separated list of all known versions for a module.
+        Module path must be case-encoded.
+      operationId: listVersions
+      servers:
+        - url: https://proxy.golang.org
+      tags:
+        - Modules
+      parameters:
+        - name: module
+          in: path
+          required: true
+          description: |
+            Module path (case-encoded, e.g., github.com/!azure/azure-sdk-for-go)
+          schema:
+            type: string
+          examples:
+            simple:
+              value: github.com/aws/aws-sdk-go
+              summary: AWS SDK
+            encoded:
+              value: github.com/!azure/azure-sdk-for-go
+              summary: Azure SDK (case-encoded)
+      responses:
+        '200':
+          description: Newline-separated version list
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: |
+                  v1.0.0
+                  v1.1.0
+                  v1.9.0
+        '404':
+          description: Module not found
+        '410':
+          description: Module removed
+
+  /{module}/@v/{version}.info:
+    get:
+      summary: Get version metadata
+      description: |
+        Returns JSON metadata for a specific version including
+        version number and publication timestamp.
+      operationId: getVersionInfo
+      servers:
+        - url: https://proxy.golang.org
+      tags:
+        - Versions
+      parameters:
+        - name: module
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          description: Version tag (e.g., v1.9.0)
+          schema:
+            type: string
+          example: v1.9.0
+      responses:
+        '200':
+          description: Version info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionInfo'
+        '404':
+          description: Version not found
+
+  /{module}/@v/{version}.mod:
+    get:
+      summary: Get go.mod file
+      description: |
+        Returns the go.mod file for a specific version.
+        Contains module dependencies and Go version requirements.
+      operationId: getGoMod
+      servers:
+        - url: https://proxy.golang.org
+      tags:
+        - Versions
+      parameters:
+        - name: module
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: go.mod file contents
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: |
+                  module github.com/aws/smithy-go
+
+                  go 1.15
+
+                  require (
+                    github.com/google/go-cmp v0.5.4
+                    github.com/jmespath/go-jmespath v0.4.0
+                  )
+
+  /{module}/@v/{version}.zip:
+    get:
+      summary: Download module source
+      description: |
+        Downloads the module source code as a ZIP archive.
+      operationId: downloadModule
+      servers:
+        - url: https://proxy.golang.org
+      tags:
+        - Downloads
+      parameters:
+        - name: module
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Module ZIP archive
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Module or version not found
+
+  /{module}/@latest:
+    get:
+      summary: Get latest version info
+      description: |
+        Returns metadata for the latest version of a module.
+        Follows the same format as /{module}/@v/{version}.info
+      operationId: getLatestVersion
+      servers:
+        - url: https://proxy.golang.org
+      tags:
+        - Versions
+      parameters:
+        - name: module
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Latest version info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionInfo'
+
+  /index:
+    get:
+      summary: Get module index
+      description: |
+        Returns a stream of newline-delimited JSON entries for all modules.
+        Can be filtered by timestamp for incremental updates.
+      operationId: getIndex
+      servers:
+        - url: https://index.golang.org
+      tags:
+        - Index
+      parameters:
+        - name: since
+          in: query
+          description: RFC3339 timestamp to get modules updated since
+          schema:
+            type: string
+            format: date-time
+          example: "2019-04-18T02:07:41.336899Z"
+        - name: limit
+          in: query
+          description: Maximum number of entries to return
+          schema:
+            type: integer
+            default: 2000
+            maximum: 2000
+      responses:
+        '200':
+          description: Newline-delimited JSON stream
+          content:
+            application/x-ndjson:
+              schema:
+                type: string
+                description: Each line is a JSON object
+                example: |
+                  {"Path":"golang.org/x/text","Version":"v0.3.0","Timestamp":"2019-04-10T19:08:52.997264Z"}
+                  {"Path":"github.com/aws/aws-sdk-go","Version":"v1.40.0","Timestamp":"2019-04-11T01:57:28.087696Z"}
+
+components:
+  schemas:
+    VersionInfo:
+      type: object
+      description: Version metadata
+      required:
+        - Version
+        - Time
+      properties:
+        Version:
+          type: string
+          description: Semantic version with v prefix
+          example: v1.9.0
+        Time:
+          type: string
+          format: date-time
+          description: Publication timestamp (RFC3339)
+          example: "2021-11-05T22:57:36Z"
+
+    IndexEntry:
+      type: object
+      description: Module index entry
+      required:
+        - Path
+        - Version
+        - Timestamp
+      properties:
+        Path:
+          type: string
+          description: Module path
+          example: github.com/aws/aws-sdk-go
+        Version:
+          type: string
+          description: Version number
+          example: v1.40.0
+        Timestamp:
+          type: string
+          format: date-time
+          description: When this version was indexed
+          example: "2019-04-11T01:57:28.087696Z"
+
+tags:
+  - name: Modules
+    description: Module discovery and metadata
+  - name: Versions
+    description: Version information and dependencies
+  - name: Downloads
+    description: Download module source
+  - name: Index
+    description: Module index for discovery

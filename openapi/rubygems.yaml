@@ -1,0 +1,480 @@
+openapi: 3.0.3
+info:
+  title: RubyGems.org API
+  description: |
+    The RubyGems.org API provides programmatic access to Ruby gem metadata,
+    versions, dependencies, and download statistics.
+
+    This schema is based on the actual API implementation used by https://packages.ecosyste.ms
+
+    **Base URLs:**
+    - API v1: `https://rubygems.org/api/v1`
+    - API v2: `https://rubygems.org/api/v2`
+    - Downloads: `https://rubygems.org/downloads`
+
+    **Authentication:** API key required for write operations (gems, owners)
+
+    **Rate Limiting:** 10 requests per second recommended
+  version: 1.0.0
+  contact:
+    name: RubyGems Support
+    url: https://help.rubygems.org/
+  license:
+    name: MIT
+
+servers:
+  - url: https://rubygems.org
+    description: RubyGems.org
+
+paths:
+  /api/v1/gems/{name}.json:
+    get:
+      summary: Get gem metadata
+      description: |
+        Retrieves metadata for a specific gem including description, homepage,
+        licenses, and download counts.
+      operationId: getGem
+      tags:
+        - Gems
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Gem name
+          schema:
+            type: string
+          examples:
+            simple:
+              value: rails
+              summary: Rails framework
+            stats:
+              value: rubystats
+              summary: Statistics library
+      responses:
+        '200':
+          description: Gem metadata retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Gem'
+        '404':
+          description: Gem not found
+
+  /api/v1/versions/{name}.json:
+    get:
+      summary: Get all versions of a gem
+      description: |
+        Retrieves a list of all published versions for a gem with their
+        metadata, including platform-specific versions.
+      operationId: getVersions
+      tags:
+        - Versions
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Gem name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Version list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Version'
+        '404':
+          description: Gem not found
+
+  /api/v2/rubygems/{name}/versions/{version}.json:
+    get:
+      summary: Get specific version with dependencies
+      description: |
+        Retrieves detailed metadata for a specific version including
+        runtime and development dependencies.
+      operationId: getVersionDetails
+      tags:
+        - Versions
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Gem name
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          description: Version number
+          schema:
+            type: string
+          example: "0.3.0"
+      responses:
+        '200':
+          description: Version details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionDetails'
+        '404':
+          description: Gem or version not found
+
+  /api/v1/gems/{name}/owners.json:
+    get:
+      summary: Get gem owners/maintainers
+      description: Retrieves the list of users who have push access to this gem
+      operationId: getOwners
+      tags:
+        - Owners
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Owner list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Owner'
+
+  /api/v1/activity/just_updated.json:
+    get:
+      summary: Get recently updated gems
+      description: Returns gems that were recently updated with new versions
+      operationId: getJustUpdated
+      tags:
+        - Activity
+      responses:
+        '200':
+          description: Recently updated gems
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActivityGem'
+
+  /api/v1/activity/latest.json:
+    get:
+      summary: Get latest published gems
+      description: Returns newly published gems
+      operationId: getLatest
+      tags:
+        - Activity
+      responses:
+        '200':
+          description: Latest gems
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActivityGem'
+
+  /downloads/{name}-{version}.gem:
+    get:
+      summary: Download gem file
+      description: Downloads the .gem file for a specific version
+      operationId: downloadGem
+      tags:
+        - Downloads
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Gem file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Gem file not found
+
+components:
+  schemas:
+    Gem:
+      type: object
+      description: Gem metadata from RubyGems.org
+      required:
+        - name
+        - version
+      properties:
+        name:
+          type: string
+          description: Gem name
+          example: rubystats
+        downloads:
+          type: integer
+          description: Total download count across all versions
+          example: 3129500
+        version:
+          type: string
+          description: Latest version number
+          example: "0.3.0"
+        version_created_at:
+          type: string
+          format: date-time
+          description: When the latest version was published
+          example: "2017-12-02T17:23:59.896Z"
+        version_downloads:
+          type: integer
+          description: Download count for the latest version
+          example: 2547012
+        platform:
+          type: string
+          description: Target platform (ruby, java, etc.)
+          example: ruby
+        authors:
+          type: string
+          description: Comma-separated list of authors
+          example: "Ilya Scharrenbroich, Bryan Donovan"
+        info:
+          type: string
+          description: Gem description
+          example: "Ruby Stats is a port of the statistics libraries from PHPMath"
+        licenses:
+          type: array
+          description: SPDX license identifiers
+          items:
+            type: string
+          example: ["MIT"]
+        metadata:
+          type: object
+          description: Additional metadata from gemspec
+          additionalProperties: true
+          example: {}
+        yanked:
+          type: boolean
+          description: Whether this version has been yanked
+          example: false
+        sha:
+          type: string
+          description: SHA256 checksum of the gem file
+          example: d328ec2cd0c2139ff0cb2787e1f92c799bd7557b0c58cc22f4e4728f0d510587
+        project_uri:
+          type: string
+          format: uri
+          description: RubyGems.org project page
+          example: https://rubygems.org/gems/rubystats
+        gem_uri:
+          type: string
+          format: uri
+          description: Download URL for latest .gem file
+          example: https://rubygems.org/gems/rubystats-0.3.0.gem
+        homepage_uri:
+          type: string
+          format: uri
+          nullable: true
+          description: Project homepage
+          example: https://github.com/phillbaker/rubystats
+        wiki_uri:
+          type: string
+          format: uri
+          nullable: true
+          description: Wiki URL
+        documentation_uri:
+          type: string
+          format: uri
+          nullable: true
+          description: Documentation URL
+          example: https://www.rubydoc.info/gems/rubystats/0.3.0
+        mailing_list_uri:
+          type: string
+          format: uri
+          nullable: true
+          description: Mailing list URL
+        source_code_uri:
+          type: string
+          format: uri
+          nullable: true
+          description: Source code repository URL
+        bug_tracker_uri:
+          type: string
+          format: uri
+          nullable: true
+          description: Issue tracker URL
+        changelog_uri:
+          type: string
+          format: uri
+          nullable: true
+          description: Changelog URL
+        funding_uri:
+          type: string
+          format: uri
+          nullable: true
+          description: Funding/sponsorship URL
+        dependencies:
+          type: object
+          description: Dependencies by type
+          properties:
+            development:
+              type: array
+              items:
+                $ref: '#/components/schemas/Dependency'
+            runtime:
+              type: array
+              items:
+                $ref: '#/components/schemas/Dependency'
+
+    Version:
+      type: object
+      description: Version metadata for a gem
+      required:
+        - number
+        - created_at
+      properties:
+        number:
+          type: string
+          description: Version number, may include platform (e.g., "1.0.0-java")
+          example: "0.3.0"
+        platform:
+          type: string
+          description: Target platform
+          example: ruby
+        created_at:
+          type: string
+          format: date-time
+          description: When this version was published
+          example: "2017-12-02T17:23:59.896Z"
+        downloads_count:
+          type: integer
+          description: Download count for this version
+          example: 2547012
+        prerelease:
+          type: boolean
+          description: Whether this is a prerelease version
+          example: false
+        licenses:
+          type: array
+          description: License identifiers
+          items:
+            type: string
+          example: ["MIT"]
+        sha:
+          type: string
+          description: SHA256 checksum
+          example: d328ec2cd0c2139ff0cb2787e1f92c799bd7557b0c58cc22f4e4728f0d510587
+        spec_sha:
+          type: string
+          description: SHA256 checksum of the gemspec
+        rubygems_version:
+          type: string
+          description: RubyGems version used to publish
+          example: "2.6.14"
+        ruby_version:
+          type: string
+          description: Required Ruby version
+          example: ">= 2.0.0"
+        authors:
+          type: string
+          description: Comma-separated author list
+        metadata:
+          type: object
+          description: Additional version metadata
+          additionalProperties: true
+
+    VersionDetails:
+      type: object
+      description: Detailed version information with dependencies
+      allOf:
+        - $ref: '#/components/schemas/Version'
+        - type: object
+          properties:
+            dependencies:
+              type: object
+              description: Dependency lists by type
+              properties:
+                development:
+                  type: array
+                  description: Development dependencies (for testing, building)
+                  items:
+                    $ref: '#/components/schemas/Dependency'
+                runtime:
+                  type: array
+                  description: Runtime dependencies (required for use)
+                  items:
+                    $ref: '#/components/schemas/Dependency'
+
+    Dependency:
+      type: object
+      description: Gem dependency with version requirements
+      required:
+        - name
+        - requirements
+      properties:
+        name:
+          type: string
+          description: Dependency gem name
+          example: minitest
+        requirements:
+          type: string
+          description: Version requirement specifier
+          example: "< 5.0, >= 4.2"
+
+    Owner:
+      type: object
+      description: Gem owner/maintainer
+      required:
+        - id
+        - handle
+      properties:
+        id:
+          type: integer
+          description: User ID
+          example: 12345
+        handle:
+          type: string
+          description: Username/handle
+          example: phillbaker
+        email:
+          type: string
+          format: email
+          description: User email (if public)
+
+    ActivityGem:
+      type: object
+      description: Gem info from activity feeds
+      properties:
+        name:
+          type: string
+          description: Gem name
+          example: rails
+        version:
+          type: string
+          description: Version number
+          example: "7.0.0"
+        platform:
+          type: string
+          example: ruby
+        info:
+          type: string
+          description: Short description
+
+tags:
+  - name: Gems
+    description: Gem metadata and information
+  - name: Versions
+    description: Version information and dependencies
+  - name: Owners
+    description: Gem ownership and maintainers
+  - name: Activity
+    description: Recently updated and published gems
+  - name: Downloads
+    description: Download gem files

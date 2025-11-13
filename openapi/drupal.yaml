@@ -1,0 +1,152 @@
+openapi: 3.0.3
+info:
+  title: Drupal Packages API
+  description: |
+    Drupal Packages API (Packagist-compatible).
+
+    Composer package repository for Drupal modules, themes, and core.
+  version: 1.0.0
+  contact:
+    name: Drupal.org
+    url: https://www.drupal.org/
+  license:
+    name: GPL-2.0
+
+servers:
+  - url: https://packages.drupal.org/8
+    description: Drupal Packages API (Drupal 8+)
+
+paths:
+  /packages/{vendor}/{package}.json:
+    get:
+      summary: Get package metadata
+      operationId: getPackage
+      tags:
+        - Packages
+      parameters:
+        - name: vendor
+          in: path
+          required: true
+          description: Vendor name (usually "drupal")
+          schema:
+            type: string
+          example: drupal
+        - name: package
+          in: path
+          required: true
+          description: Package name
+          schema:
+            type: string
+          example: core
+      responses:
+        '200':
+          description: Package metadata (Packagist-compatible format)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackageResponse'
+
+  /search.json:
+    get:
+      summary: Search packages
+      operationId: searchPackages
+      tags:
+        - Search
+      parameters:
+        - name: s
+          in: query
+          description: Search term
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SearchResult'
+
+  /packages/list.json:
+    get:
+      summary: List all packages
+      operationId: listPackages
+      tags:
+        - Packages
+      responses:
+        '200':
+          description: Package name list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  packageNames:
+                    type: array
+                    items:
+                      type: string
+
+components:
+  schemas:
+    PackageResponse:
+      type: object
+      description: Packagist-compatible package response
+      properties:
+        packages:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/Version'
+
+    Version:
+      type: object
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        type:
+          type: string
+          example: drupal-module
+        require:
+          type: object
+          additionalProperties:
+            type: string
+        source:
+          type: object
+          properties:
+            type:
+              type: string
+            url:
+              type: string
+              format: uri
+        dist:
+          type: object
+          properties:
+            type:
+              type: string
+            url:
+              type: string
+              format: uri
+
+    SearchResult:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        url:
+          type: string
+          format: uri
+
+tags:
+  - name: Packages
+    description: Drupal packages
+  - name: Search
+    description: Search packages

@@ -1,0 +1,35 @@
+name: Validate OpenAPI Schemas
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'openapi/**/*.yaml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'openapi/**/*.yaml'
+
+jobs:
+  validate:
+    name: Validate OpenAPI Specifications
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Swagger CLI
+        run: npm install -g @apidevtools/swagger-cli
+
+      - name: Validate all schemas
+        run: |
+          for schema in openapi/*.yaml; do
+            echo "Validating $(basename $schema)..."
+            swagger-cli validate "$schema"
+          done

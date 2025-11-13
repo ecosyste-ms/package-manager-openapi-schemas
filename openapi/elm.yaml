@@ -1,0 +1,138 @@
+openapi: 3.0.3
+info:
+  title: Elm Packages API
+  description: |
+    Elm Packages API for Elm language packages.
+
+    Package repository for the Elm programming language.
+  version: 1.0.0
+  contact:
+    name: Elm Packages
+    url: https://package.elm-lang.org/
+  license:
+    name: BSD-3-Clause
+
+servers:
+  - url: https://package.elm-lang.org
+    description: Elm Packages
+
+paths:
+  /all-packages:
+    get:
+      summary: Get all package names with versions
+      operationId: getAllPackages
+      tags:
+        - Packages
+      responses:
+        '200':
+          description: Map of package names to version lists
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+
+  /all-packages/since/{timestamp}:
+    get:
+      summary: Get packages updated since timestamp
+      operationId: getPackagesSince
+      tags:
+        - Packages
+      parameters:
+        - name: timestamp
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: List of updated packages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /packages/{author}/{package}/releases.json:
+    get:
+      summary: Get package releases
+      operationId: getReleases
+      tags:
+        - Packages
+      parameters:
+        - name: author
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: package
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Map of versions to timestamps
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: integer
+
+  /packages/{author}/{package}/{version}/elm.json:
+    get:
+      summary: Get package metadata
+      operationId: getPackageMetadata
+      tags:
+        - Packages
+      parameters:
+        - name: author
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: package
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Package metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+
+components:
+  schemas:
+    Package:
+      type: object
+      properties:
+        name:
+          type: string
+        summary:
+          type: string
+        license:
+          type: string
+        version:
+          type: string
+        dependencies:
+          type: object
+          additionalProperties:
+            type: string
+
+tags:
+  - name: Packages
+    description: Elm packages

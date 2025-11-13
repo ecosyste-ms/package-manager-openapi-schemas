@@ -1,0 +1,219 @@
+openapi: 3.0.3
+info:
+  title: Homebrew Formulae API
+  description: |
+    Homebrew Formulae API provides access to formula and cask metadata,
+    versions, dependencies, and installation analytics.
+  version: 1.0.0
+  contact:
+    name: Homebrew
+    url: https://brew.sh/
+  license:
+    name: BSD-2-Clause
+
+servers:
+  - url: https://formulae.brew.sh/api
+    description: Homebrew Formulae API
+
+paths:
+  /formula.json:
+    get:
+      summary: List all formulae
+      operationId: listFormulae
+      tags:
+        - Formulae
+      responses:
+        '200':
+          description: All formulae metadata
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Formula'
+
+  /formula/{name}.json:
+    get:
+      summary: Get formula details
+      operationId: getFormula
+      tags:
+        - Formulae
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          example: wget
+      responses:
+        '200':
+          description: Formula metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Formula'
+
+  /cask.json:
+    get:
+      summary: List all casks
+      operationId: listCasks
+      tags:
+        - Casks
+      responses:
+        '200':
+          description: All casks metadata
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cask'
+
+  /cask/{name}.json:
+    get:
+      summary: Get cask details
+      operationId: getCask
+      tags:
+        - Casks
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cask metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cask'
+
+  /analytics/install/{days}.json:
+    get:
+      summary: Get installation analytics
+      operationId: getInstallAnalytics
+      tags:
+        - Analytics
+      parameters:
+        - name: days
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: ['30d', '90d', '365d']
+      responses:
+        '200':
+          description: Installation statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Analytics'
+
+components:
+  schemas:
+    Formula:
+      type: object
+      properties:
+        name:
+          type: string
+          example: wget
+        full_name:
+          type: string
+        tap:
+          type: string
+          example: homebrew/core
+        desc:
+          type: string
+          example: Internet file retriever
+        license:
+          type: string
+          example: GPL-3.0-or-later
+        homepage:
+          type: string
+          format: uri
+        versions:
+          type: object
+          properties:
+            stable:
+              type: string
+              example: "1.21.3"
+            head:
+              type: string
+            bottle:
+              type: boolean
+        urls:
+          type: object
+        revision:
+          type: integer
+        bottle:
+          type: object
+          properties:
+            stable:
+              type: object
+        dependencies:
+          type: array
+          items:
+            type: string
+        build_dependencies:
+          type: array
+          items:
+            type: string
+        analytics:
+          type: object
+          properties:
+            install:
+              type: object
+              properties:
+                30d:
+                  type: object
+                  additionalProperties:
+                    type: integer
+                90d:
+                  type: object
+                365d:
+                  type: object
+
+    Cask:
+      type: object
+      properties:
+        token:
+          type: string
+        name:
+          type: array
+          items:
+            type: string
+        desc:
+          type: string
+        homepage:
+          type: string
+          format: uri
+        url:
+          type: string
+          format: uri
+        version:
+          type: string
+
+    Analytics:
+      type: object
+      properties:
+        category:
+          type: string
+        total_items:
+          type: integer
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        total_count:
+          type: integer
+
+tags:
+  - name: Formulae
+    description: Homebrew formulae (packages)
+  - name: Casks
+    description: Homebrew casks (applications)
+  - name: Analytics
+    description: Installation statistics

@@ -1,0 +1,212 @@
+openapi: 3.0.3
+info:
+  title: Terraform Registry API
+  description: |
+    Terraform Registry API for modules and providers.
+
+    Public registry for Terraform modules and providers.
+  version: 1.0.0
+  contact:
+    name: HashiCorp
+    url: https://developer.hashicorp.com/terraform/registry
+  license:
+    name: MPL-2.0
+
+servers:
+  - url: https://registry.terraform.io/v1
+    description: Terraform Registry API
+
+paths:
+  /modules/{namespace}/{name}/{provider}:
+    get:
+      summary: Get module metadata
+      operationId: getModule
+      tags:
+        - Modules
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+          example: hashicorp
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          example: consul
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+          example: aws
+      responses:
+        '200':
+          description: Module metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Module'
+
+  /modules/{namespace}/{name}/{provider}/versions:
+    get:
+      summary: List module versions
+      operationId: listModuleVersions
+      tags:
+        - Modules
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Module versions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  modules:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        versions:
+                          type: array
+                          items:
+                            type: object
+
+  /modules/{namespace}/{name}/{provider}/{version}/download:
+    get:
+      summary: Download module
+      operationId: downloadModule
+      tags:
+        - Modules
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Redirect to download URL
+          headers:
+            X-Terraform-Get:
+              schema:
+                type: string
+                description: Download URL
+
+  /providers/{namespace}/{type}/versions:
+    get:
+      summary: List provider versions
+      operationId: listProviderVersions
+      tags:
+        - Providers
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+          example: hashicorp
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+          example: aws
+      responses:
+        '200':
+          description: Provider versions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  versions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProviderVersion'
+
+components:
+  schemas:
+    Module:
+      type: object
+      properties:
+        id:
+          type: string
+        owner:
+          type: string
+        namespace:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        provider:
+          type: string
+        description:
+          type: string
+        source:
+          type: string
+          format: uri
+        published_at:
+          type: string
+          format: date-time
+        downloads:
+          type: integer
+
+    ProviderVersion:
+      type: object
+      properties:
+        version:
+          type: string
+        protocols:
+          type: array
+          items:
+            type: string
+        platforms:
+          type: array
+          items:
+            type: object
+            properties:
+              os:
+                type: string
+              arch:
+                type: string
+
+tags:
+  - name: Modules
+    description: Terraform modules
+  - name: Providers
+    description: Terraform providers

@@ -1,0 +1,246 @@
+openapi: 3.0.3
+info:
+  title: Open VSX Registry API
+  description: |
+    Open VSX Registry API for VS Code extensions.
+
+    Open-source alternative to the Visual Studio Marketplace.
+  version: 1.0.0
+  contact:
+    name: Open VSX Support
+    url: https://github.com/eclipse/openvsx/wiki
+  license:
+    name: Eclipse Public License 2.0
+
+servers:
+  - url: https://open-vsx.org/api
+    description: Open VSX Registry
+
+paths:
+  /{namespace}/{extension}:
+    get:
+      summary: Get extension metadata
+      operationId: getExtension
+      tags:
+        - Extensions
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+          example: redhat
+        - name: extension
+          in: path
+          required: true
+          schema:
+            type: string
+          example: vscode-yaml
+      responses:
+        '200':
+          description: Extension metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Extension'
+
+  /{namespace}/{extension}/{version}:
+    get:
+      summary: Get specific version
+      operationId: getVersion
+      tags:
+        - Extensions
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: extension
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Version metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Extension'
+
+  /-/query:
+    get:
+      summary: Search extensions
+      operationId: searchExtensions
+      tags:
+        - Search
+      parameters:
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: includeAllVersions
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  extensions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ExtensionSummary'
+
+  /-/search:
+    get:
+      summary: Full-text search
+      operationId: search
+      tags:
+        - Search
+      parameters:
+        - name: query
+          in: query
+          schema:
+            type: string
+        - name: size
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  extensions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ExtensionSummary'
+
+components:
+  schemas:
+    Extension:
+      type: object
+      required:
+        - name
+        - namespace
+        - version
+      properties:
+        name:
+          type: string
+          example: vscode-yaml
+        namespace:
+          type: string
+          example: redhat
+        version:
+          type: string
+          example: "1.18.0"
+        displayName:
+          type: string
+          example: YAML
+        description:
+          type: string
+        targetPlatform:
+          type: string
+          example: universal
+        categories:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+        license:
+          type: string
+          example: MIT
+        homepage:
+          type: string
+          format: uri
+        repository:
+          type: string
+          format: uri
+        bugs:
+          type: string
+          format: uri
+        downloadCount:
+          type: integer
+        averageRating:
+          type: number
+        reviewCount:
+          type: integer
+        verified:
+          type: boolean
+        deprecated:
+          type: boolean
+        files:
+          type: object
+          properties:
+            download:
+              type: string
+              format: uri
+            icon:
+              type: string
+              format: uri
+            readme:
+              type: string
+              format: uri
+        allVersions:
+          type: object
+          additionalProperties:
+            type: string
+            format: uri
+        publishedBy:
+          type: object
+          properties:
+            loginName:
+              type: string
+            fullName:
+              type: string
+            avatarUrl:
+              type: string
+              format: uri
+
+    ExtensionSummary:
+      type: object
+      properties:
+        name:
+          type: string
+        namespace:
+          type: string
+        version:
+          type: string
+        displayName:
+          type: string
+        description:
+          type: string
+
+tags:
+  - name: Extensions
+    description: Extension metadata
+  - name: Search
+    description: Search and discovery

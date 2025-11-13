@@ -1,0 +1,529 @@
+openapi: 3.0.3
+info:
+  title: Packagist API
+  description: |
+    The Packagist API provides programmatic access to PHP package (Composer) metadata,
+    versions, and download statistics.
+
+    This schema is based on the actual API implementation used by https://packages.ecosyste.ms
+
+    **Base URLs:**
+    - Web API: `https://packagist.org`
+    - Repository API: `https://repo.packagist.org/p2`
+    - RSS Feeds: `https://packagist.org/feeds`
+
+    **Authentication:** Not required for public packages
+
+    **Rate Limiting:** Not officially documented, please be respectful
+
+    **Package Format:** vendor/package (e.g., symfony/console)
+  version: 1.0.0
+  contact:
+    name: Packagist Support
+    url: https://packagist.org/about
+  license:
+    name: MIT
+
+servers:
+  - url: https://packagist.org
+    description: Packagist Web API
+  - url: https://repo.packagist.org/p2
+    description: Packagist Repository API (metadata v2)
+
+paths:
+  /packages/{vendor}/{package}.json:
+    get:
+      summary: Get package metadata
+      description: |
+        Retrieves complete metadata for a package including all versions,
+        downloads, and maintainer information.
+
+        **Note:** Use vendor/package format (e.g., symfony/console)
+      operationId: getPackage
+      servers:
+        - url: https://packagist.org
+      tags:
+        - Packages
+      parameters:
+        - name: vendor
+          in: path
+          required: true
+          description: Vendor/organization name
+          schema:
+            type: string
+          example: psr
+        - name: package
+          in: path
+          required: true
+          description: Package name
+          schema:
+            type: string
+          example: log
+      responses:
+        '200':
+          description: Package metadata retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackageResponse'
+        '404':
+          description: Package not found
+
+  /packages/list.json:
+    get:
+      summary: List all package names
+      description: Returns a list of all package names on Packagist
+      operationId: listPackages
+      servers:
+        - url: https://packagist.org
+      tags:
+        - Packages
+      responses:
+        '200':
+          description: Package list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  packageNames:
+                    type: array
+                    items:
+                      type: string
+                    example: ["psr/log", "symfony/console", "laravel/framework"]
+
+  /feeds/releases.rss:
+    get:
+      summary: Get recent releases (RSS)
+      description: RSS feed of recently released package versions
+      operationId: getRecentReleases
+      servers:
+        - url: https://packagist.org
+      tags:
+        - Feeds
+      responses:
+        '200':
+          description: RSS feed
+          content:
+            application/rss+xml:
+              schema:
+                type: string
+                format: xml
+
+  /feeds/packages.rss:
+    get:
+      summary: Get new packages (RSS)
+      description: RSS feed of newly published packages
+      operationId: getNewPackages
+      servers:
+        - url: https://packagist.org
+      tags:
+        - Feeds
+      responses:
+        '200':
+          description: RSS feed
+          content:
+            application/rss+xml:
+              schema:
+                type: string
+                format: xml
+
+  /{vendor}/{package}.json:
+    get:
+      summary: Get package metadata (v2 repository format)
+      description: |
+        Retrieves package metadata in Composer repository v2 format.
+        This is the format used by Composer for dependency resolution.
+      operationId: getPackageV2
+      servers:
+        - url: https://repo.packagist.org/p2
+      tags:
+        - Repository
+      parameters:
+        - name: vendor
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: package
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Package metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryPackage'
+
+  /{vendor}/{package}~dev.json:
+    get:
+      summary: Get development versions metadata
+      description: |
+        Retrieves metadata for development/branch versions.
+        Development versions include branches and may not have stable tags.
+      operationId: getPackageDevVersions
+      servers:
+        - url: https://repo.packagist.org/p2
+      tags:
+        - Repository
+      parameters:
+        - name: vendor
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: package
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Development versions metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryPackage'
+
+components:
+  schemas:
+    PackageResponse:
+      type: object
+      description: Complete package information from Packagist web API
+      required:
+        - package
+      properties:
+        package:
+          $ref: '#/components/schemas/Package'
+
+    Package:
+      type: object
+      description: Package metadata
+      required:
+        - name
+        - versions
+      properties:
+        name:
+          type: string
+          description: Package name in vendor/package format
+          example: psr/log
+        description:
+          type: string
+          description: Package description
+          example: Common interface for logging libraries
+        time:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        maintainers:
+          type: array
+          description: Package maintainers
+          items:
+            $ref: '#/components/schemas/Maintainer'
+        versions:
+          type: object
+          description: Map of version numbers to version metadata
+          additionalProperties:
+            $ref: '#/components/schemas/Version'
+          example:
+            "3.0.0": {}
+            "2.0.0": {}
+        type:
+          type: string
+          description: Package type
+          example: library
+        repository:
+          type: string
+          format: uri
+          description: VCS repository URL
+          example: https://github.com/php-fig/log
+        github_stars:
+          type: integer
+          description: Number of GitHub stars
+        github_watchers:
+          type: integer
+          description: Number of GitHub watchers
+        github_forks:
+          type: integer
+          description: Number of GitHub forks
+        github_open_issues:
+          type: integer
+          description: Number of open GitHub issues
+        language:
+          type: string
+          description: Primary programming language
+          example: PHP
+        dependents:
+          type: integer
+          description: Number of packages depending on this one
+        suggesters:
+          type: integer
+          description: Number of packages suggesting this one
+        downloads:
+          type: object
+          description: Download statistics
+          properties:
+            total:
+              type: integer
+              example: 1000000000
+            monthly:
+              type: integer
+            daily:
+              type: integer
+        favers:
+          type: integer
+          description: Number of users who favorited this package
+        abandoned:
+          oneOf:
+            - type: boolean
+            - type: string
+          description: Whether package is abandoned, or replacement package name
+
+    Version:
+      type: object
+      description: Package version metadata
+      required:
+        - name
+        - version
+      properties:
+        name:
+          type: string
+          description: Package name
+          example: psr/log
+        description:
+          type: string
+          description: Version description
+        keywords:
+          type: array
+          description: Keywords for search
+          items:
+            type: string
+          example: ["log", "psr", "psr-3"]
+        homepage:
+          type: string
+          format: uri
+          nullable: true
+          description: Project homepage
+          example: https://github.com/php-fig/log
+        version:
+          type: string
+          description: Version number
+          example: "3.0.0"
+        version_normalized:
+          type: string
+          description: Normalized version for comparison
+          example: "3.0.0.0"
+        license:
+          type: array
+          description: SPDX license identifiers
+          items:
+            type: string
+          example: ["MIT"]
+        authors:
+          type: array
+          description: Package authors
+          items:
+            $ref: '#/components/schemas/Author'
+        source:
+          $ref: '#/components/schemas/Source'
+        dist:
+          $ref: '#/components/schemas/Distribution'
+        type:
+          type: string
+          description: Package type (library, project, metapackage, etc.)
+          example: library
+        time:
+          type: string
+          format: date-time
+          description: Release timestamp
+          example: "2021-07-14T16:46:02+00:00"
+        autoload:
+          type: object
+          description: Composer autoload configuration
+          additionalProperties: true
+          example:
+            psr-4:
+              "Psr\\Log\\": "src"
+        extra:
+          type: object
+          description: Extra metadata
+          additionalProperties: true
+        require:
+          type: object
+          description: Runtime dependencies
+          additionalProperties:
+            type: string
+          example:
+            php: ">=8.0.0"
+        require-dev:
+          type: object
+          description: Development dependencies
+          additionalProperties:
+            type: string
+        conflict:
+          type: object
+          description: Conflicting packages
+          additionalProperties:
+            type: string
+        replace:
+          type: object
+          description: Packages replaced by this one
+          additionalProperties:
+            type: string
+        provide:
+          type: object
+          description: Virtual packages provided
+          additionalProperties:
+            type: string
+        suggest:
+          type: object
+          description: Suggested packages
+          additionalProperties:
+            type: string
+        support:
+          type: object
+          description: Support resources
+          properties:
+            source:
+              type: string
+              format: uri
+            issues:
+              type: string
+              format: uri
+            docs:
+              type: string
+              format: uri
+            forum:
+              type: string
+              format: uri
+            wiki:
+              type: string
+              format: uri
+            chat:
+              type: string
+              format: uri
+        funding:
+          type: array
+          description: Funding options
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                example: github
+              url:
+                type: string
+                format: uri
+        bin:
+          type: array
+          description: Binary files
+          items:
+            type: string
+        abandoned:
+          oneOf:
+            - type: boolean
+            - type: string
+          description: Abandoned status or replacement package
+
+    Source:
+      type: object
+      description: Source code repository information
+      properties:
+        url:
+          type: string
+          format: uri
+          description: Repository URL
+          example: https://github.com/php-fig/log.git
+        type:
+          type: string
+          description: VCS type
+          enum: [git, svn, hg]
+          example: git
+        reference:
+          type: string
+          description: Git commit reference (branch, tag, or SHA)
+          example: fe5ea303b0887d5caefd3d431c3e61ad47037001
+
+    Distribution:
+      type: object
+      description: Distribution archive information
+      properties:
+        url:
+          type: string
+          format: uri
+          description: Download URL (typically GitHub zipball)
+          example: https://api.github.com/repos/php-fig/log/zipball/fe5ea303b0887d5caefd3d431c3e61ad47037001
+        type:
+          type: string
+          description: Archive type
+          enum: [zip, tar]
+          example: zip
+        shasum:
+          type: string
+          description: SHA-1 checksum (may be empty)
+        reference:
+          type: string
+          description: Git reference
+          example: fe5ea303b0887d5caefd3d431c3e61ad47037001
+
+    Author:
+      type: object
+      description: Package author information
+      properties:
+        name:
+          type: string
+          example: PHP-FIG
+        email:
+          type: string
+          format: email
+        homepage:
+          type: string
+          format: uri
+          example: https://www.php-fig.org/
+        role:
+          type: string
+          description: Author role (developer, maintainer, etc.)
+
+    Maintainer:
+      type: object
+      description: Package maintainer on Packagist
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        homepage:
+          type: string
+          format: uri
+        avatar_url:
+          type: string
+          format: uri
+          description: Gravatar or avatar image URL
+
+    RepositoryPackage:
+      type: object
+      description: Package metadata in repository v2 format (used by Composer)
+      properties:
+        minified:
+          type: string
+          description: Format version identifier
+          example: composer/2.0
+        packages:
+          type: object
+          description: Map of package names to version arrays
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/Version'
+
+tags:
+  - name: Packages
+    description: Package metadata and information
+  - name: Feeds
+    description: RSS feeds for updates
+  - name: Repository
+    description: Composer repository metadata (v2 format)

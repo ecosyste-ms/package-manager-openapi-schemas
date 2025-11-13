@@ -1,0 +1,272 @@
+openapi: 3.0.3
+info:
+  title: MetaCPAN API
+  description: |
+    MetaCPAN API provides access to Perl module metadata, releases,
+    and author information.
+
+    Comprehensive metadata for CPAN (Comprehensive Perl Archive Network).
+  version: 1.0.0
+  contact:
+    name: MetaCPAN
+    url: https://github.com/metacpan/metacpan-api
+  license:
+    name: Artistic License 2.0
+
+servers:
+  - url: https://fastapi.metacpan.org/v1
+    description: MetaCPAN FastAPI
+
+paths:
+  /release/{distribution}:
+    get:
+      summary: Get release metadata
+      operationId: getRelease
+      tags:
+        - Releases
+      parameters:
+        - name: distribution
+          in: path
+          required: true
+          description: Distribution name
+          schema:
+            type: string
+          example: Moose
+      responses:
+        '200':
+          description: Release metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Release'
+
+  /release/_search:
+    get:
+      summary: Search releases
+      operationId: searchReleases
+      tags:
+        - Search
+      parameters:
+        - name: q
+          in: query
+          description: Query string (e.g., "status:latest")
+          schema:
+            type: string
+          example: "status:latest"
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: fields
+          in: query
+          description: Comma-separated fields to return
+          schema:
+            type: string
+          example: distribution,version,date
+        - name: sort
+          in: query
+          description: Sort field and order
+          schema:
+            type: string
+          example: date:desc
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+
+  /module/{module}:
+    get:
+      summary: Get module metadata
+      operationId: getModule
+      tags:
+        - Modules
+      parameters:
+        - name: module
+          in: path
+          required: true
+          description: Module name
+          schema:
+            type: string
+          example: Moose::Object
+      responses:
+        '200':
+          description: Module metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Module'
+
+  /author/{pauseid}:
+    get:
+      summary: Get author information
+      operationId: getAuthor
+      tags:
+        - Authors
+      parameters:
+        - name: pauseid
+          in: path
+          required: true
+          description: PAUSE ID (author identifier)
+          schema:
+            type: string
+          example: ETHER
+      responses:
+        '200':
+          description: Author information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Author'
+
+components:
+  schemas:
+    Release:
+      type: object
+      properties:
+        distribution:
+          type: string
+          example: Moose
+        version:
+          type: string
+          example: "2.2201"
+        author:
+          type: string
+          description: PAUSE ID
+          example: ETHER
+        abstract:
+          type: string
+          description: Short description
+        date:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [latest, cpan, backpan]
+        maturity:
+          type: string
+          enum: [released, developer]
+        authorized:
+          type: boolean
+        deprecated:
+          type: boolean
+        provides:
+          type: array
+          description: Modules provided by this distribution
+          items:
+            type: string
+        main_module:
+          type: string
+        license:
+          type: array
+          items:
+            type: string
+        resources:
+          type: object
+          properties:
+            homepage:
+              type: string
+              format: uri
+            repository:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                web:
+                  type: string
+                  format: uri
+        metadata:
+          type: object
+          properties:
+            keywords:
+              type: array
+              items:
+                type: string
+        tests:
+          type: object
+          properties:
+            pass:
+              type: integer
+            fail:
+              type: integer
+            na:
+              type: integer
+            unknown:
+              type: integer
+        archive:
+          type: string
+          description: Tarball filename
+          example: Moose-2.2201.tar.gz
+        download_url:
+          type: string
+          format: uri
+
+    Module:
+      type: object
+      properties:
+        name:
+          type: string
+        distribution:
+          type: string
+        version:
+          type: string
+        author:
+          type: string
+        abstract:
+          type: string
+        pod:
+          type: string
+          description: POD documentation
+
+    Author:
+      type: object
+      properties:
+        pauseid:
+          type: string
+          example: ETHER
+        name:
+          type: string
+        email:
+          type: array
+          items:
+            type: string
+        website:
+          type: array
+          items:
+            type: string
+        profile:
+          type: array
+          items:
+            type: object
+
+    SearchResponse:
+      type: object
+      properties:
+        hits:
+          type: object
+          properties:
+            total:
+              type: integer
+            hits:
+              type: array
+              items:
+                type: object
+                properties:
+                  _source:
+                    type: object
+                  fields:
+                    type: object
+
+tags:
+  - name: Releases
+    description: Distribution releases
+  - name: Modules
+    description: Perl modules
+  - name: Authors
+    description: CPAN authors
+  - name: Search
+    description: Search functionality

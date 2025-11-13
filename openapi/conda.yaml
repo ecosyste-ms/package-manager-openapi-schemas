@@ -1,0 +1,116 @@
+openapi: 3.0.3
+info:
+  title: Anaconda.org API
+  description: |
+    Anaconda.org API provides access to Conda package metadata and channels.
+
+    Package repository for Conda packages across multiple channels.
+  version: 1.0.0
+  contact:
+    name: Anaconda Support
+    url: https://docs.anaconda.com/
+  license:
+    name: BSD-3-Clause
+
+servers:
+  - url: https://api.anaconda.org
+    description: Anaconda API
+
+paths:
+  /package/{channel}/{package}:
+    get:
+      summary: Get package metadata
+      operationId: getPackage
+      tags:
+        - Packages
+      parameters:
+        - name: channel
+          in: path
+          required: true
+          description: Channel name (e.g., conda-forge, bioconda)
+          schema:
+            type: string
+          example: conda-forge
+        - name: package
+          in: path
+          required: true
+          description: Package name
+          schema:
+            type: string
+          example: numpy
+      responses:
+        '200':
+          description: Package metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+
+  /search:
+    get:
+      summary: Search packages
+      operationId: searchPackages
+      tags:
+        - Search
+      parameters:
+        - name: q
+          in: query
+          description: Search query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PackageSummary'
+
+components:
+  schemas:
+    Package:
+      type: object
+      properties:
+        name:
+          type: string
+          example: numpy
+        owner:
+          type: string
+        summary:
+          type: string
+        conda_platforms:
+          type: array
+          items:
+            type: string
+        releases:
+          type: array
+          items:
+            $ref: '#/components/schemas/Release'
+
+    Release:
+      type: object
+      properties:
+        version:
+          type: string
+        files:
+          type: array
+          items:
+            type: object
+
+    PackageSummary:
+      type: object
+      properties:
+        name:
+          type: string
+        owner:
+          type: string
+        summary:
+          type: string
+
+tags:
+  - name: Packages
+    description: Package metadata
+  - name: Search
+    description: Search packages

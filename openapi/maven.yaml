@@ -1,0 +1,565 @@
+openapi: 3.0.3
+info:
+  title: Maven Central Repository API
+  description: |
+    The Maven Central Repository API provides access to Java/JVM package (artifact) metadata,
+    versions, and POM files.
+
+    This schema is based on the actual API implementation used by https://packages.ecosyste.ms
+
+    **Base URLs:**
+    - Repository: `https://repo1.maven.org/maven2`
+    - Search API: `https://search.maven.org`
+    - Sonatype Central: `https://central.sonatype.com`
+
+    **Authentication:** Not required for public artifacts
+
+    **Package Format:** groupId:artifactId (e.g., com.google.guava:guava)
+    - Group ID: Reverse domain notation (e.g., org.springframework)
+    - Artifact ID: Project name (e.g., spring-core)
+
+    **Key Concepts:**
+    - POM files (pom.xml) contain artifact metadata and dependencies
+    - maven-metadata.xml contains version listings
+    - Artifacts stored in directory structure based on group ID
+
+    **Official Documentation:** https://maven.apache.org/repository/
+  version: 2.0.0
+  contact:
+    name: Maven Central Support
+    url: https://central.sonatype.org/
+  license:
+    name: Apache License 2.0
+
+servers:
+  - url: https://repo1.maven.org/maven2
+    description: Maven Central Repository
+  - url: https://search.maven.org
+    description: Maven Search API
+  - url: https://central.sonatype.com/api
+    description: Sonatype Central API
+
+paths:
+  /{groupPath}/{artifactId}/maven-metadata.xml:
+    get:
+      summary: Get artifact metadata
+      description: |
+        Returns XML metadata including all available versions for an artifact.
+        Group path uses slashes instead of dots (e.g., com/google/guava).
+      operationId: getArtifactMetadata
+      servers:
+        - url: https://repo1.maven.org/maven2
+      tags:
+        - Artifacts
+      parameters:
+        - name: groupPath
+          in: path
+          required: true
+          description: Group ID with dots replaced by slashes
+          schema:
+            type: string
+          examples:
+            google:
+              value: com/google/guava
+              summary: Google Guava
+            spring:
+              value: org/springframework/spring-core
+              summary: Spring Core
+        - name: artifactId
+          in: path
+          required: true
+          description: Artifact ID
+          schema:
+            type: string
+          example: guava
+      responses:
+        '200':
+          description: Maven metadata XML
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/MavenMetadata'
+        '404':
+          description: Artifact not found
+
+  /{groupPath}/{artifactId}/{version}/{artifactId}-{version}.pom:
+    get:
+      summary: Get POM file
+      description: |
+        Returns the Project Object Model (POM) file for a specific version.
+        Contains complete artifact metadata, dependencies, and build configuration.
+      operationId: getPom
+      servers:
+        - url: https://repo1.maven.org/maven2
+      tags:
+        - Artifacts
+      parameters:
+        - name: groupPath
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: artifactId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          description: Version number
+          schema:
+            type: string
+          example: "32.1.0-jre"
+      responses:
+        '200':
+          description: POM XML file
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Pom'
+        '404':
+          description: POM not found
+
+  /{groupPath}/{artifactId}/{version}/{artifactId}-{version}.jar:
+    get:
+      summary: Download JAR file
+      description: Downloads the compiled Java archive for a specific version
+      operationId: downloadJar
+      servers:
+        - url: https://repo1.maven.org/maven2
+      tags:
+        - Downloads
+      parameters:
+        - name: groupPath
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: artifactId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: JAR file
+          content:
+            application/java-archive:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: JAR not found
+
+  /{groupPath}/{artifactId}/{version}/{artifactId}-{version}-sources.jar:
+    get:
+      summary: Download sources JAR
+      description: Downloads the source code archive for a specific version
+      operationId: downloadSources
+      servers:
+        - url: https://repo1.maven.org/maven2
+      tags:
+        - Downloads
+      parameters:
+        - name: groupPath
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: artifactId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Sources JAR file
+          content:
+            application/java-archive:
+              schema:
+                type: string
+                format: binary
+
+  /solrsearch/select:
+    get:
+      summary: Search artifacts
+      description: |
+        Search for artifacts using Solr query syntax.
+        Returns JSON with artifact information.
+      operationId: searchArtifacts
+      servers:
+        - url: https://search.maven.org
+      tags:
+        - Search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: |
+            Search query. Supports fields:
+            - g: groupId
+            - a: artifactId
+            - v: version
+            - p: packaging
+            - c: classifier
+          schema:
+            type: string
+          examples:
+            simple:
+              value: guava
+              summary: Simple search
+            groupAndArtifact:
+              value: g:com.google.guava AND a:guava
+              summary: Specific artifact
+        - name: rows
+          in: query
+          description: Number of results
+          schema:
+            type: integer
+            default: 20
+            maximum: 200
+        - name: start
+          in: query
+          description: Result offset
+          schema:
+            type: integer
+            default: 0
+        - name: core
+          in: query
+          description: Search core
+          schema:
+            type: string
+            default: gav
+        - name: wt
+          in: query
+          description: Response format
+          schema:
+            type: string
+            enum: [json, xml]
+            default: json
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+
+  /internal/browse/components:
+    post:
+      summary: Browse components
+      description: |
+        Search and browse components using Sonatype Central Portal API.
+        Supports sorting by publication date and other fields.
+      operationId: browseComponents
+      servers:
+        - url: https://central.sonatype.com/api
+      tags:
+        - Search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                repository:
+                  type: string
+                  default: maven-central
+                size:
+                  type: integer
+                  example: 20
+                sortField:
+                  type: string
+                  enum: [publishedDate, name, namespace]
+                  example: publishedDate
+                sortDirection:
+                  type: string
+                  enum: [asc, desc]
+                  example: desc
+      responses:
+        '200':
+          description: Component list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComponentBrowseResponse'
+
+components:
+  schemas:
+    MavenMetadata:
+      type: object
+      description: Maven metadata XML structure
+      xml:
+        name: metadata
+      properties:
+        groupId:
+          type: string
+          description: Group identifier
+          example: com.google.guava
+        artifactId:
+          type: string
+          description: Artifact identifier
+          example: guava
+        versioning:
+          type: object
+          properties:
+            latest:
+              type: string
+              description: Latest version (may be snapshot)
+              example: "32.1.0-jre"
+            release:
+              type: string
+              description: Latest release version
+              example: "32.1.0-jre"
+            versions:
+              type: object
+              properties:
+                version:
+                  type: array
+                  items:
+                    type: string
+                  example: ["31.0-jre", "31.1-jre", "32.0-jre", "32.1.0-jre"]
+            lastUpdated:
+              type: string
+              description: Timestamp in yyyyMMddHHmmss format
+              example: "20230412121416"
+
+    Pom:
+      type: object
+      description: Project Object Model (POM) XML
+      xml:
+        name: project
+      properties:
+        modelVersion:
+          type: string
+          description: POM model version
+          example: "4.0.0"
+        groupId:
+          type: string
+          example: com.google.guava
+        artifactId:
+          type: string
+          example: guava
+        version:
+          type: string
+          example: "32.1.0-jre"
+        packaging:
+          type: string
+          description: Packaging type
+          enum: [jar, war, pom, maven-plugin, ear, rar]
+          example: jar
+        name:
+          type: string
+          description: Human-readable project name
+          example: Guava
+        description:
+          type: string
+          example: Guava is a suite of core and expanded libraries
+        url:
+          type: string
+          format: uri
+          description: Project URL
+        licenses:
+          type: object
+          properties:
+            license:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  url:
+                    type: string
+                    format: uri
+        developers:
+          type: object
+          properties:
+            developer:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  email:
+                    type: string
+        scm:
+          type: object
+          description: Source control management
+          properties:
+            url:
+              type: string
+              format: uri
+            connection:
+              type: string
+            developerConnection:
+              type: string
+        dependencies:
+          type: object
+          properties:
+            dependency:
+              type: array
+              items:
+                $ref: '#/components/schemas/Dependency'
+        dependencyManagement:
+          type: object
+          description: Dependency version management
+        parent:
+          type: object
+          description: Parent POM reference
+          properties:
+            groupId:
+              type: string
+            artifactId:
+              type: string
+            version:
+              type: string
+
+    Dependency:
+      type: object
+      description: Maven dependency
+      properties:
+        groupId:
+          type: string
+          example: com.google.code.findbugs
+        artifactId:
+          type: string
+          example: jsr305
+        version:
+          type: string
+          example: "3.0.2"
+        scope:
+          type: string
+          description: Dependency scope
+          enum: [compile, provided, runtime, test, system]
+          example: compile
+        optional:
+          type: boolean
+          description: Whether dependency is optional
+        type:
+          type: string
+          example: jar
+        classifier:
+          type: string
+          description: Classifier (e.g., sources, javadoc)
+        exclusions:
+          type: object
+          description: Transitive dependency exclusions
+
+    SearchResponse:
+      type: object
+      description: Maven search results (Solr format)
+      properties:
+        responseHeader:
+          type: object
+          properties:
+            status:
+              type: integer
+            QTime:
+              type: integer
+        response:
+          type: object
+          properties:
+            numFound:
+              type: integer
+              description: Total matching results
+            start:
+              type: integer
+            docs:
+              type: array
+              items:
+                $ref: '#/components/schemas/SearchDoc'
+
+    SearchDoc:
+      type: object
+      description: Search result document
+      properties:
+        id:
+          type: string
+          description: Artifact coordinate
+          example: "com.google.guava:guava:32.1.0-jre"
+        g:
+          type: string
+          description: Group ID
+          example: com.google.guava
+        a:
+          type: string
+          description: Artifact ID
+          example: guava
+        v:
+          type: string
+          description: Version
+          example: "32.1.0-jre"
+        p:
+          type: string
+          description: Packaging
+          example: jar
+        timestamp:
+          type: integer
+          description: Publication timestamp (Unix ms)
+        ec:
+          type: array
+          description: Extension and classifiers
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    ComponentBrowseResponse:
+      type: object
+      description: Sonatype Central browse response
+      properties:
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/Component'
+        totalCount:
+          type: integer
+
+    Component:
+      type: object
+      description: Component from Sonatype Central
+      properties:
+        id:
+          type: string
+          description: Package URL (PURL) format
+          example: pkg:maven/com.google.guava/guava@32.1.0-jre
+        namespace:
+          type: string
+          example: com.google.guava
+        name:
+          type: string
+          example: guava
+        version:
+          type: string
+          example: "32.1.0-jre"
+        latestVersion:
+          type: string
+        publishedDate:
+          type: string
+          format: date-time
+
+tags:
+  - name: Artifacts
+    description: Artifact metadata and POM files
+  - name: Downloads
+    description: Download JARs and sources
+  - name: Search
+    description: Search for artifacts

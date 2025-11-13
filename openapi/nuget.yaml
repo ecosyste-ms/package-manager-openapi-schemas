@@ -1,0 +1,745 @@
+openapi: 3.0.3
+info:
+  title: NuGet Server API
+  description: |
+    The NuGet Server API (v3) provides programmatic access to .NET package metadata,
+    versions, and download statistics from NuGet.org.
+
+    This schema is based on the actual API implementation used by https://packages.ecosyste.ms
+
+    **Base URLs:**
+    - Service Index: `https://api.nuget.org/v3/index.json`
+    - Registration: `https://api.nuget.org/v3/registration5-gz-semver2`
+    - Flat Container: `https://api.nuget.org/v3-flatcontainer`
+    - Search: `https://azuresearch-usnc.nuget.org`
+
+    **Authentication:** API key required for package publishing
+
+    **Key Concepts:**
+    - Service Index: Discovery endpoint listing all available services
+    - Registration: Package metadata and version information
+    - Flat Container: Direct package file downloads
+    - Package IDs are case-insensitive
+
+    **Official Documentation:** https://docs.microsoft.com/en-us/nuget/api/overview
+  version: 3.0.0
+  contact:
+    name: NuGet Support
+    url: https://www.nuget.org/policies/Contact
+  license:
+    name: Apache License 2.0
+
+servers:
+  - url: https://api.nuget.org/v3
+    description: NuGet Server API v3
+  - url: https://azuresearch-usnc.nuget.org
+    description: NuGet Search API
+
+paths:
+  /index.json:
+    get:
+      summary: Get service index
+      description: |
+        Returns the service index which lists all available API endpoints
+        and their capabilities. This is the entry point for API discovery.
+      operationId: getServiceIndex
+      servers:
+        - url: https://api.nuget.org/v3
+      tags:
+        - Service
+      responses:
+        '200':
+          description: Service index
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceIndex'
+
+  /registration5-gz-semver2/{packageId}/index.json:
+    get:
+      summary: Get package registration
+      description: |
+        Retrieves package registration metadata including all versions.
+        Registration data may be paginated for packages with many versions.
+      operationId: getPackageRegistration
+      servers:
+        - url: https://api.nuget.org/v3
+      tags:
+        - Packages
+      parameters:
+        - name: packageId
+          in: path
+          required: true
+          description: Package ID (case-insensitive)
+          schema:
+            type: string
+          examples:
+            popular:
+              value: newtonsoft.json
+              summary: Popular JSON library
+            framework:
+              value: microsoft.aspnetcore.app
+              summary: ASP.NET Core framework
+      responses:
+        '200':
+          description: Package registration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registration'
+        '404':
+          description: Package not found
+
+  /registration5-gz-semver2/{packageId}/{version}.json:
+    get:
+      summary: Get specific version registration
+      description: Retrieves detailed metadata for a specific package version
+      operationId: getVersionRegistration
+      servers:
+        - url: https://api.nuget.org/v3
+      tags:
+        - Packages
+      parameters:
+        - name: packageId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          description: Semantic version number
+          schema:
+            type: string
+          example: "13.0.3"
+      responses:
+        '200':
+          description: Version registration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionRegistration'
+
+  /v3-flatcontainer/{packageId}/index.json:
+    get:
+      summary: Get package versions list
+      description: |
+        Returns a simple list of all available versions for a package.
+        This is a lightweight alternative to the registration endpoint.
+      operationId: getPackageVersions
+      servers:
+        - url: https://api.nuget.org
+      tags:
+        - Packages
+      parameters:
+        - name: packageId
+          in: path
+          required: true
+          description: Package ID (lowercase)
+          schema:
+            type: string
+            pattern: '^[a-z0-9._-]+$'
+          example: newtonsoft.json
+      responses:
+        '200':
+          description: Version list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  versions:
+                    type: array
+                    items:
+                      type: string
+                    example: ["12.0.1", "12.0.2", "13.0.1", "13.0.3"]
+
+  /v3-flatcontainer/{packageId}/{version}/{packageId}.{version}.nupkg:
+    get:
+      summary: Download package file
+      description: |
+        Downloads the .nupkg file for a specific version.
+        Package IDs and versions in the path must be lowercase.
+      operationId: downloadPackage
+      servers:
+        - url: https://api.nuget.org
+      tags:
+        - Downloads
+      parameters:
+        - name: packageId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-z0-9._-]+$'
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Package file (.nupkg is a ZIP archive)
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Package or version not found
+
+  /v3-flatcontainer/{packageId}/{version}/{packageId}.nuspec:
+    get:
+      summary: Get package specification
+      description: |
+        Downloads the .nuspec file (XML metadata) for a specific version.
+      operationId: getPackageSpec
+      servers:
+        - url: https://api.nuget.org
+      tags:
+        - Packages
+      parameters:
+        - name: packageId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: NuSpec XML file
+          content:
+            application/xml:
+              schema:
+                type: string
+                format: xml
+
+  /catalog0/index.json:
+    get:
+      summary: Get catalog index
+      description: |
+        Returns the catalog index which tracks all package changes over time.
+        Used for discovering recently updated packages.
+      operationId: getCatalogIndex
+      servers:
+        - url: https://api.nuget.org/v3
+      tags:
+        - Catalog
+      responses:
+        '200':
+          description: Catalog index
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogIndex'
+
+  /query:
+    get:
+      summary: Search packages
+      description: |
+        Full-text search for packages with filtering and pagination.
+      operationId: searchPackages
+      servers:
+        - url: https://azuresearch-usnc.nuget.org
+      tags:
+        - Search
+      parameters:
+        - name: q
+          in: query
+          description: Search query
+          schema:
+            type: string
+          example: json
+        - name: skip
+          in: query
+          description: Number of results to skip
+          schema:
+            type: integer
+            default: 0
+        - name: take
+          in: query
+          description: Number of results to return
+          schema:
+            type: integer
+            default: 20
+            maximum: 1000
+        - name: prerelease
+          in: query
+          description: Include prerelease versions
+          schema:
+            type: boolean
+            default: false
+        - name: semVerLevel
+          in: query
+          description: SemVer compatibility level
+          schema:
+            type: string
+            enum: ["2.0.0"]
+        - name: packageType
+          in: query
+          description: Filter by package type
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResults'
+
+components:
+  schemas:
+    ServiceIndex:
+      type: object
+      description: NuGet service index with endpoint discovery
+      required:
+        - version
+        - resources
+      properties:
+        version:
+          type: string
+          description: Service index version
+          example: "3.0.0"
+        resources:
+          type: array
+          description: Available service endpoints
+          items:
+            type: object
+            properties:
+              "@id":
+                type: string
+                format: uri
+                description: Service endpoint URL
+              "@type":
+                type: string
+                description: Service type identifier
+                example: PackagePublish/2.0.0
+              comment:
+                type: string
+                description: Human-readable description
+
+    Registration:
+      type: object
+      description: Package registration with all versions
+      required:
+        - count
+        - items
+      properties:
+        "@id":
+          type: string
+          format: uri
+          example: https://api.nuget.org/v3/registration5-semver1/newtonsoft.json/index.json
+        "@type":
+          type: array
+          items:
+            type: string
+          example: ["catalog:CatalogRoot", "PackageRegistration"]
+        commitId:
+          type: string
+          format: uuid
+          description: Catalog commit identifier
+        commitTimeStamp:
+          type: string
+          format: date-time
+          description: When this registration was last updated
+        count:
+          type: integer
+          description: Number of registration pages
+          example: 2
+        items:
+          type: array
+          description: Registration pages (may be inline or references)
+          items:
+            $ref: '#/components/schemas/RegistrationPage'
+        "@context":
+          type: object
+          description: JSON-LD context
+
+    RegistrationPage:
+      type: object
+      description: A page of package versions within a registration
+      properties:
+        "@id":
+          type: string
+          format: uri
+        "@type":
+          type: string
+          example: catalog:CatalogPage
+        commitId:
+          type: string
+          format: uuid
+        commitTimeStamp:
+          type: string
+          format: date-time
+        count:
+          type: integer
+          description: Number of versions in this page
+        items:
+          type: array
+          description: Package versions (may be inline or fetched)
+          items:
+            $ref: '#/components/schemas/PackageVersion'
+        parent:
+          type: string
+          format: uri
+          description: Link back to the registration index
+        lower:
+          type: string
+          description: Lowest version in this page
+          example: "12.0.1"
+        upper:
+          type: string
+          description: Highest version in this page
+          example: "13.0.3"
+
+    PackageVersion:
+      type: object
+      description: Package version entry in registration
+      properties:
+        "@id":
+          type: string
+          format: uri
+        "@type":
+          type: string
+          example: Package
+        commitId:
+          type: string
+          format: uuid
+        commitTimeStamp:
+          type: string
+          format: date-time
+        catalogEntry:
+          $ref: '#/components/schemas/CatalogEntry'
+        packageContent:
+          type: string
+          format: uri
+          description: Download URL for .nupkg file
+          example: https://api.nuget.org/v3-flatcontainer/newtonsoft.json/13.0.3/newtonsoft.json.13.0.3.nupkg
+        registration:
+          type: string
+          format: uri
+          description: Link to parent registration
+
+    CatalogEntry:
+      type: object
+      description: Detailed package metadata for a version
+      required:
+        - id
+        - version
+      properties:
+        "@id":
+          type: string
+          format: uri
+        "@type":
+          type: string
+          example: PackageDetails
+        id:
+          type: string
+          description: Package ID (official casing)
+          example: Newtonsoft.Json
+        version:
+          type: string
+          description: Version number
+          example: "13.0.3"
+        authors:
+          type: string
+          description: Comma-separated author list
+          example: James Newton-King
+        description:
+          type: string
+          example: Json.NET is a popular high-performance JSON framework for .NET
+        title:
+          type: string
+          description: Display title
+          example: Json.NET
+        iconUrl:
+          type: string
+          format: uri
+          description: Package icon URL
+        licenseExpression:
+          type: string
+          description: SPDX license expression
+          example: MIT
+        licenseUrl:
+          type: string
+          format: uri
+          description: License URL
+        projectUrl:
+          type: string
+          format: uri
+          description: Project homepage
+          example: https://www.newtonsoft.com/json
+        repository:
+          type: string
+          format: uri
+          description: Source repository URL
+        tags:
+          type: array
+          description: Package tags
+          items:
+            type: string
+          example: ["json", "serialization"]
+        language:
+          type: string
+          description: Package locale
+          example: en-US
+        published:
+          type: string
+          format: date-time
+          description: Publication timestamp
+        listed:
+          type: boolean
+          description: Whether package is listed in search
+        requireLicenseAcceptance:
+          type: boolean
+          description: Whether license must be accepted before install
+        minClientVersion:
+          type: string
+          description: Minimum NuGet client version required
+        packageContent:
+          type: string
+          format: uri
+          description: Download URL
+        dependencyGroups:
+          type: array
+          description: Dependencies grouped by target framework
+          items:
+            $ref: '#/components/schemas/DependencyGroup'
+        deprecation:
+          $ref: '#/components/schemas/Deprecation'
+        vulnerabilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vulnerability'
+        packageTypes:
+          type: array
+          description: Package types
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: Dependency
+
+    DependencyGroup:
+      type: object
+      description: Dependencies for a specific target framework
+      properties:
+        "@id":
+          type: string
+          format: uri
+        "@type":
+          type: string
+          example: PackageDependencyGroup
+        targetFramework:
+          type: string
+          description: .NET target framework moniker
+          example: .NETStandard2.0
+        dependencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Dependency'
+
+    Dependency:
+      type: object
+      description: Package dependency
+      properties:
+        "@id":
+          type: string
+          format: uri
+        "@type":
+          type: string
+          example: PackageDependency
+        id:
+          type: string
+          description: Dependency package ID
+          example: System.Text.Json
+        range:
+          type: string
+          description: Version range
+          example: "[4.7.2, )"
+        registration:
+          type: string
+          format: uri
+          description: Registration URL for dependency
+
+    Deprecation:
+      type: object
+      description: Package deprecation information
+      properties:
+        reasons:
+          type: array
+          items:
+            type: string
+            enum: [Legacy, CriticalBugs, Other]
+        message:
+          type: string
+          description: Deprecation message
+        alternatePackage:
+          type: object
+          properties:
+            id:
+              type: string
+            range:
+              type: string
+
+    Vulnerability:
+      type: object
+      description: Known security vulnerability
+      properties:
+        advisoryUrl:
+          type: string
+          format: uri
+        severity:
+          type: string
+          enum: [Low, Moderate, High, Critical]
+
+    VersionRegistration:
+      type: object
+      description: Single version registration details
+      properties:
+        catalogEntry:
+          $ref: '#/components/schemas/CatalogEntry'
+        listed:
+          type: boolean
+        packageContent:
+          type: string
+          format: uri
+        published:
+          type: string
+          format: date-time
+        registration:
+          type: string
+          format: uri
+
+    CatalogIndex:
+      type: object
+      description: Catalog index for package change tracking
+      properties:
+        "@id":
+          type: string
+          format: uri
+        "@type":
+          type: array
+          items:
+            type: string
+        commitId:
+          type: string
+          format: uuid
+        commitTimeStamp:
+          type: string
+          format: date-time
+        count:
+          type: integer
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              "@id":
+                type: string
+                format: uri
+              "@type":
+                type: string
+              commitId:
+                type: string
+              commitTimeStamp:
+                type: string
+                format: date-time
+              count:
+                type: integer
+
+    SearchResults:
+      type: object
+      description: Package search results
+      properties:
+        totalHits:
+          type: integer
+          description: Total number of matching packages
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+
+    SearchResult:
+      type: object
+      description: Individual search result
+      properties:
+        id:
+          type: string
+          description: Package ID
+        version:
+          type: string
+          description: Latest version
+        description:
+          type: string
+        versions:
+          type: array
+          description: All versions
+          items:
+            type: object
+            properties:
+              version:
+                type: string
+              downloads:
+                type: integer
+              "@id":
+                type: string
+                format: uri
+        authors:
+          type: array
+          items:
+            type: string
+        iconUrl:
+          type: string
+          format: uri
+        licenseUrl:
+          type: string
+          format: uri
+        owners:
+          type: array
+          items:
+            type: string
+        projectUrl:
+          type: string
+          format: uri
+        registration:
+          type: string
+          format: uri
+        summary:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        title:
+          type: string
+        totalDownloads:
+          type: integer
+        verified:
+          type: boolean
+          description: Whether package is from a verified source
+        packageTypes:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+
+tags:
+  - name: Service
+    description: Service discovery and metadata
+  - name: Packages
+    description: Package registration and metadata
+  - name: Downloads
+    description: Package file downloads
+  - name: Catalog
+    description: Package change catalog
+  - name: Search
+    description: Package search

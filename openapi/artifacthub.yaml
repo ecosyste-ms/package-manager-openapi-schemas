@@ -1,0 +1,6088 @@
+openapi: 3.0.3
+info:
+  title: Artifact Hub
+  description: |
+    Find, install and publish Cloud Native packages
+
+    This OpenAPI specification was obtained from https://artifacthub.io/docs/api/openapi.yaml
+  version: 1.21.0
+  contact:
+    name: Artifact Hub support
+    url: https://cloud-native.slack.com/channels/artifact-hub
+servers:
+  - url: "/api/v1"
+tags:
+  - name: Users
+    description: ""
+  - name: Organizations
+    description: ""
+  - name: Repositories
+    description: ""
+  - name: Packages
+    description: ""
+  - name: Subscriptions
+    description: ""
+  - name: Webhooks
+    description: ""
+  - name: Availability checks
+    description: ""
+  - name: Stats
+    description: ""
+  - name: Integrations
+    description: ""
+paths:
+  /users:
+    post:
+      tags:
+        - Users
+      summary: Register a new user
+      description: Register a new user
+      operationId: registerUser
+      requestBody:
+        description: ""
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - alias
+                - email
+                - password
+              properties:
+                alias:
+                  type: string
+                  example: jdoe
+                first_name:
+                  type: string
+                  example: John
+                last_name:
+                  type: string
+                  example: Doe
+                email:
+                  type: string
+                  format: email
+                  example: jdoe@email.com
+                password:
+                  type: string
+                  format: password
+                  example: strongP@55w0rd
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /users/verify-email:
+    post:
+      tags:
+        - Users
+      summary: Verify user's email address
+      description: Verify user's email address
+      operationId: verifyEmail
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  format: uuid
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "410":
+          $ref: "#/components/responses/GoneError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /users/profile:
+    get:
+      tags:
+        - Users
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Get user's profile
+      description: Get user's profile
+      operationId: getUserProfile
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      tags:
+        - Users
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Update user's profile
+      description: Update user's profile
+      operationId: updateUserProfile
+      requestBody:
+        description: ""
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /users/password:
+    put:
+      tags:
+        - Users
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Update user's password
+      description: Update user's password
+      operationId: updateUserPassword
+      requestBody:
+        description: ""
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - old
+                - new
+              properties:
+                old:
+                  type: string
+                  format: password
+                new:
+                  type: string
+                  format: password
+              example:
+                old: strongP@55w0rd
+                new: newstrongP@55w0rd
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /users/password-reset-code:
+    post:
+      tags:
+        - Users
+      summary: Register a code to reset the password
+      description: Register a code to reset the password
+      operationId: resetPasswordCode
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /users/verify-password-reset-code:
+    post:
+      tags:
+        - Users
+      summary: Verify a reset password code
+      description: Verify a reset password code
+      operationId: verifyPasswordCode
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: "The request has succeeded"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "410":
+          $ref: "#/components/responses/GoneError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /users/reset-password:
+    put:
+      tags:
+        - Users
+      summary: Reset the user's password
+      description: Reset the user's password
+      operationId: resetPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - password
+              properties:
+                code:
+                  type: string
+                  format: uuid
+                password:
+                  type: string
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /orgs:
+    post:
+      tags:
+        - Organizations
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Register new organization
+      description: Register new organization
+      operationId: addOrganization
+      requestBody:
+        description: ""
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrganizationSummary"
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /orgs/user:
+    get:
+      tags:
+        - Organizations
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Get organizations the user belongs to
+      description: Get organizations the user belongs to
+      operationId: getUserOrganizations
+      parameters:
+        - $ref: "#/components/parameters/OffsetParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: ""
+          headers:
+            Pagination-Total-Count:
+              schema:
+                type: string
+              description: Total number of organizations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Organization"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/orgs/{orgName}":
+    get:
+      tags:
+        - Organizations
+      summary: Get organization profile
+      description: Get organization profile
+      operationId: getOrganizationProfile
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationSummary"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      tags:
+        - Organizations
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Updates organization profile
+      description: Updates organization profile
+      operationId: updateOrganizationProfile
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+      requestBody:
+        description: ""
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrganizationSummary"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Organizations
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Delete organization
+      description: Delete organization
+      operationId: deleteOrganization
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/orgs/{orgName}/authorization-policy":
+    get:
+      tags:
+        - Organizations
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Get organization's authorization policy
+      description: Get organization's authorization policy
+      operationId: getOrganizationAuthPolicy
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizationPolicy"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      tags:
+        - Organizations
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Update organization's authorization policy
+      description: Update organization's authorization policy
+      operationId: updateOrganizationAuthPolicy
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+      requestBody:
+        description: ""
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthorizationPolicy"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/orgs/{orgName}/members":
+    get:
+      tags:
+        - Organizations
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Get organization members
+      description: Get organization members
+      operationId: getOrganizationMembers
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/orgs/{orgName}/member/{userAlias}":
+    post:
+      tags:
+        - Organizations
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Add a new member to the organization
+      description: Add a new member to the organization
+      operationId: addOrganizationMember
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+        - $ref: "#/components/parameters/UserAliasParam"
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Organizations
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Delete a member from the organization
+      description: Delete a member from the organization
+      operationId: deleteOrganizationMember
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+        - $ref: "#/components/parameters/UserAliasParam"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/orgs/{orgName}/accept-invitation":
+    get:
+      tags:
+        - Organizations
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Confirm user's membership to an organization
+      description: Confirm user's membership to an organization
+      operationId: acceptOrganizationInvitation
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/orgs/{orgName}/user-allowed-actions":
+    get:
+      tags:
+        - Organizations
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: >-
+        Get actions which user is allowed to perform in the provided
+        organization
+      description: >-
+        Get actions which user is allowed to perform in the provided
+        organization
+      operationId: getAllowedActions
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuthorizerAction"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /repositories/search:
+    get:
+      tags:
+        - Repositories
+      summary: Search repositories that meet the provided criteria
+      description: Search repositories that meet the provided criteria
+      operationId: searchRepositories
+      parameters:
+        - $ref: "#/components/parameters/OffsetParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/RepositoryKindsListParam"
+        - $ref: "#/components/parameters/UsersListParam"
+        - $ref: "#/components/parameters/OrgsListParam"
+        - $ref: "#/components/parameters/RepoNameQueryParam"
+        - $ref: "#/components/parameters/UrlQueryParam"
+      responses:
+        "200":
+          description: ""
+          headers:
+            Pagination-Total-Count:
+              schema:
+                type: string
+              description: Total number of repositories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Repository"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /repositories/user:
+    post:
+      tags:
+        - Repositories
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Add user's repository
+      description: Add user's repository
+      operationId: addUserRepository
+      requestBody:
+        $ref: "#/components/requestBodies/RepositoryBody"
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/repositories/user/{repoName}":
+    put:
+      tags:
+        - Repositories
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Update user's repository
+      description: Update user's repository
+      operationId: updateUserRepository
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+      requestBody:
+        $ref: "#/components/requestBodies/RepositoryBody"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Repositories
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Delete user's repository
+      description: Delete user's repository
+      operationId: deleteUserRepository
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/repositories/user/{repoName}/transfer":
+    put:
+      tags:
+        - Repositories
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Transfer user's repository ownership to an organization
+      description: Transfer user's repository ownership to an organization
+      operationId: transferRepositoryOwnershipToOrganization
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/OrgNameToParam"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/repositories/user/{repoName}/claim-ownership":
+    put:
+      tags:
+        - Repositories
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Claim the ownership of a given repository
+      description: Claim the ownership of a given repository
+      operationId: claimRepositoryOwnership
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/OrgNameToParam"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/repositories/org/{orgName}":
+    post:
+      tags:
+        - Repositories
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Add organization's repository
+      description: Add organization's repository
+      operationId: addOrganizationRepository
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+      requestBody:
+        $ref: "#/components/requestBodies/RepositoryBody"
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/repositories/org/{orgName}/{repoName}":
+    put:
+      tags:
+        - Repositories
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Update organization's repository
+      description: Update organization's repository
+      operationId: updateOrganizationRepository
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+        - $ref: "#/components/parameters/RepoNameParam"
+      requestBody:
+        $ref: "#/components/requestBodies/RepositoryBody"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Repositories
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Delete organization's repository
+      description: Delete organization's repository
+      operationId: deleteOrganizationRepository
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+        - $ref: "#/components/parameters/RepoNameParam"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/repositories/org/{orgName}/{repoName}/transfer":
+    put:
+      tags:
+        - Repositories
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Transfer organization's repository to a different owner
+      description: Transfer organization's repository to a different owner
+      operationId: transferRepositoryOwnership
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/OrgNameToParam"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/repositories/org/{orgName}/{repoName}/claim-ownership":
+    put:
+      tags:
+        - Repositories
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Claim the ownership of a given repository
+      description: Claim the ownership of a given repository
+      operationId: claimRepositoryOwnershipFromOrganization
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/OrgNameToParam"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /packages/stats:
+    get:
+      tags:
+        - Packages
+      summary: Get the number of packages and releases registered
+      description: Get the number of packages and releases registered
+      operationId: getPackageStats
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  packages:
+                    type: integer
+                    nullable: false
+                  releases:
+                    type: integer
+                    nullable: false
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /packages/random:
+    get:
+      tags:
+        - Packages
+      summary: Get some random packages
+      description: Get some random packages
+      operationId: getRandomPackages
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PackageSummary"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /packages/search:
+    get:
+      tags:
+        - Packages
+      summary: Search packages that meet the provided criteria
+      description: Search packages that meet the provided criteria
+      operationId: searchPackages
+      parameters:
+        - $ref: "#/components/parameters/OffsetParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/FacetsParam"
+        - $ref: "#/components/parameters/TSQueryWebParam"
+        - $ref: "#/components/parameters/RepositoryKindsListParam"
+        - $ref: "#/components/parameters/PackageCategoryListParam"
+        - $ref: "#/components/parameters/UsersListParam"
+        - $ref: "#/components/parameters/OrgsListParam"
+        - $ref: "#/components/parameters/RepositoriesListParam"
+        - $ref: "#/components/parameters/LicensesListParam"
+        - $ref: "#/components/parameters/CapabilitiesListParam"
+        - $ref: "#/components/parameters/DeprecatedParam"
+        - $ref: "#/components/parameters/OperatorsParam"
+        - $ref: "#/components/parameters/VerifiedPublisherParam"
+        - $ref: "#/components/parameters/OfficialParam"
+        - $ref: "#/components/parameters/CNCFParam"
+        - $ref: "#/components/parameters/SortParam"
+      responses:
+        "200":
+          description: ""
+          headers:
+            Pagination-Total-Count:
+              schema:
+                type: string
+              description: Total number of packages for this search
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  packages:
+                    type: array
+                    nullable: false
+                    items:
+                      $ref: "#/components/schemas/PackageSummary"
+                  facets:
+                    type: array
+                    nullable: false
+                    items:
+                      $ref: "#/components/schemas/Facets"
+              examples:
+                s1:
+                  value:
+                    packages:
+                      - package_id: a9c77b9a-2cd1-4a8f-b9e8-6b8f94e13407
+                        name: artifact-hub
+                        normalized_name: artifact-hub
+                        logo_image_id: 0f5488e2-da57-486b-a20f-bfe746ed3e23
+                        stars: 2
+                        description: >-
+                          Artifact Hub is a web-based application that enables
+                          finding, installing, and publishing Cloud Native
+                          packages.
+                        version: 0.1.0
+                        app_version: 0.1.0
+                        deprecated: false
+                        ts: 1617098261617098268
+                        repository:
+                          url: "http://url.com"
+                          kind: 0
+                          name: artifact-hub
+                          display_name: Artifact Hub
+                          repository_id: a032a436-3568-4970-804a-2780f5e9d231
+                          organization_name: artifacthub
+                          organization_display_name: Artifact Hub
+                          verified_publisher: true
+                          official: true
+                          scanner_disabled: false
+                      - package_id: 3af7b6a1-adbd-41f1-ad96-e1eb3350b019
+                        name: sentry-kubernetes
+                        normalized_name: sentry-kubernetes
+                        logo_image_id: 55f2ed75-015d-4edd-9990-11fb2ffcae9e
+                        stars: 0
+                        category: 4
+                        description: A Helm chart for sentry-kubernetes
+                        version: 0.2.3
+                        app_version: latest
+                        deprecated: false
+                        ts: 1617098268
+                        repository:
+                          url: "http://url.com"
+                          kind: 0
+                          name: incubator
+                          display_name: Incubator
+                          repository_id: dba459d0-6beb-451a-b15a-52d67cc93fa0
+                          organization_name: helm
+                          organization_display_name: Helm
+                          verified_publisher: false
+                          official: false
+                          scanner_disabled: false
+                      - package_id: 0d38123f-fb60-41f0-bd00-76fb331bf7ed
+                        name: etcd-operator
+                        normalized_name: etcd-operator
+                        logo_image_id: 5gt2ed75-015d-40dd-9990-11fb2tgcae9e
+                        stars: 0
+                        category: 2
+                        description: CoreOS etcd-operator Helm chart for Kubernetes
+                        version: 0.10.3
+                        app_version: 0.9.4
+                        deprecated: false
+                        ts: 1617098268
+                        repository:
+                          url: "http://url.com"
+                          kind: 0
+                          name: stable
+                          display_name: Stable
+                          repository_id: 486f6d4c-9f66-11eb-a8b3-0242ac130003
+                          organization_name: helm
+                          organization_display_name: Helm
+                          verified_publisher: false
+                          official: false
+                          scanner_disabled: false
+                    facets:
+                      - title: Organization
+                        filter_key: org
+                        options:
+                          - id: helm
+                            name: Helm
+                            total: 53
+                          - id: artifacthub
+                            name: Artifact Hub
+                            total: 1
+                      - title: kind
+                        filter_key: kind
+                        options:
+                          - id: "0"
+                            name: Helm charts
+                            total: 54
+                      - title: Repository
+                        filter_key: repo
+                        options:
+                          - id: stable
+                            name: Stable
+                            total: 16
+                          - id: incubator
+                            name: Incubator
+                            total: 36
+                          - id: artifact-hub
+                            name: Artifact Hub
+                            total: 1
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /packages/starred:
+    get:
+      tags:
+        - Packages
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Get packages starred by user
+      description: Get packages starred by user
+      operationId: getStarredPackagesByUser
+      parameters:
+        - $ref: "#/components/parameters/OffsetParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: ""
+          headers:
+            Pagination-Total-Count:
+              schema:
+                type: string
+              description: Total number of starred packages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PackageSummary"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/argo-template/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getArgoTemplatesDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArgoTemplate"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/backstage/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getBackstagePluginsDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackstagePlugin"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/bootc/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getBootableContainersDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BootableContainer"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/container/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get container image details
+      description: Get container image details
+      operationId: getContainerImageDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContainerImage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/coredns/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getCoreDNSPluginDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoreDNSPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/falco/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getFalcoRulesDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FalcoPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/gatekeeper/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getGatekeeperPoliciesDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatekeeperPolicy"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/headlamp/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getHeadlampPluginDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeadlampPluginPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/helm/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getHelmPackageDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HelmPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/helm-plugin/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getHelmPluginDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HelmPluginPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/inspektor-gadget/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getInspektorGadgetDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InspektorGadgetPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/kagent/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getKagentPackageDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KagentPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/kcl/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getKCLPackageDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KCLPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/keda-scaler/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getKedaScalerDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KedaScalerPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/keptn/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getKeptnIntegrationsDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KeptnIntegrationsPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/knative-client-plugin/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getKnativeClientPluginIntegrationsDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KnativeClientPluginsPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/krew/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getKubectlPluginDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KrewPluginsPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/kubearmor/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getKubeArmorPoliciesDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KubeArmorPoliciesPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/kubewarden/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getKubewardenPoliciesDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KubewardenPoliciesPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/kyverno/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getKyvernoPoliciesDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KyvernoPolicy"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/meshery/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getMesheryDesignsDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MesheryDesign"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/opa/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getOPAPoliciesDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OPAPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/olm/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getOLMOperatorDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OLMPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/opencost/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getOpencostPluginDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpencostPlugin"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/radius/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getRadiusRecipeDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RadiusRecipe"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/tbaction/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getTinkerbellActionsDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TBActionPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/tekton-pipeline/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getTektonPipelineDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TektonPipelinePackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/tekton-stepaction/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getTektonStepActionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TektonStepActionPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  "/packages/tekton-task/{repoName}/{packageName}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getTektonTaskDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TektonTaskPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/argo-template/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getArgoTemplatesVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArgoTemplate"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/backstage/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getBackstagePluginsVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackstagePlugin"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/bootc/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getBootableContainersVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BootableContainer"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/container/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get container image details
+      description: Get container image details
+      operationId: getContainerImageVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContainerImage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/coredns/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package details
+      description: Get package details
+      operationId: getCoreDNSPluginVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoreDNSPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/falco/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getFalcoRulesVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FalcoPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/gatekeeper/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getGatekeeperPoliciesVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatekeeperPolicy"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/helm/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getHelmPackageVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HelmPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/helm-plugin/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getHelmPluginVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HelmPluginPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/headlamp/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getHeadlampVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeadlampPluginPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/inspektor-gadget/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getInspektorGadgetVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InspektorGadgetPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/kagent/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getKagentVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KagentPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/kcl/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getKCLVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KCLPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/keda-scaler/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getKedaScalerVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KedaScalerPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/keptn/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getKeptnIntegrationsVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KeptnIntegrationsPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/knative-client-plugin/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getKnativeClientPluginsVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KnativeClientPluginsPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/krew/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getKubectlPluginVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KrewPluginsPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/kubearmor/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getKubeArmorPoliciesVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KubeArmorPoliciesPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/kubewarden/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getKubewardenPoliciesVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KubewardenPoliciesPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/kyverno/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getKyvernoPoliciesVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KyvernoPolicy"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/meshery/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getMesheryDesignVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MesheryDesign"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/opa/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getOPAPoliciesVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OPAPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/olm/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getOLMOperatorVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OLMPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/opencost/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getOpencostPluginVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpencostPlugin"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/radius/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getRadiusRecipeVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RadiusRecipe"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/tbaction/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getTinkerbellActionsVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TBActionPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/tekton-pipeline/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getTektonPipelineVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TektonPipelinePackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/tekton-stepaction/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getTektonStepActionVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TektonStepActionPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/tekton-task/{repoName}/{packageName}/{version}":
+    get:
+      tags:
+        - Packages
+      summary: Get package version details
+      description: Get package version details
+      operationId: getTektonTaskVersionDetails
+      parameters:
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TektonTaskPackage"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/{repoKindParam}/{repoName}/{packageName}/changelog.md":
+    get:
+      tags:
+        - Packages
+      summary: Get package's changelog in markdown format
+      description: Get package's changelog in markdown format
+      operationId: generateChangelogMD
+      parameters:
+        - $ref: "#/components/parameters/RepoKindParam"
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            text/markdown:
+              schema:
+                type: string
+                example: |
+                  # Changelog
+                  ## 1.3.0 - 2021-10-06
+                  ### Added
+                  - Support for Tekton pipelines
+                  - Versions index to changelog modal
+                  - Allow publishers to include screenshots in packages
+                  - Repository metadata file is now supported in Helm OCI repositories
+                  - Support for provenance files in Helm OCI repositories
+                  - Changes annotation is now available for Krew plugins kind
+                  - Option to show/hide stars in widget
+                  - Link Helm charts dependencies to packages in the hub
+                  - API endpoint for helm-exporter tool
+                  ### Changed
+                  - Improve Helm OCI support (include HIP 6 changes)
+                  - Improve packages search results facets
+                  - Bump Trivy to 0.20.0
+                  - Upgrade backend and frontend dependencies
+                  ### Fixed
+                  - Some bugs and other improvements
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/{repoKindParam}/{repoName}/{packageName}/production-usage":
+    get:
+      tags:
+        - Packages
+      summary: Get a summary of which of the organizations the user belongs to are using the package in production
+      description: Get a summary of which of the organizations the user belongs to are using the package in production
+      operationId: getProductionUsage
+      parameters:
+        - $ref: "#/components/parameters/RepoKindParam"
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            text/markdown:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductionUsageOrganization"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  ? "/packages/{repoKindParam}/{repoName}/{packageName}/production-usage/${orgName}"
+  : post:
+      tags:
+        - Packages
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Add organization to package's production users list
+      description: Add organization to package's production users list
+      operationId: addProductionUsage
+      parameters:
+        - $ref: "#/components/parameters/RepoKindParam"
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/OrgNameParam"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Packages
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Delete organization from package's production usage list
+      description: Delete organization from package's production usage list
+      operationId: deleteProductionUsage
+      parameters:
+        - $ref: "#/components/parameters/RepoKindParam"
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+        - $ref: "#/components/parameters/OrgNameParam"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/{repoKindParam}/{repoName}/{packageName}/summary":
+    get:
+      tags:
+        - Packages
+      summary: Get package summary details
+      description: Get package summary details
+      operationId: getPackageSummary
+      parameters:
+        - $ref: "#/components/parameters/RepoKindParam"
+        - $ref: "#/components/parameters/RepoNameParam"
+        - $ref: "#/components/parameters/PackageNameParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PackageSummary"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/{packageID}/stars":
+    get:
+      tags:
+        - Packages
+      summary: Get package stars
+      description: Get package stars
+      operationId: getPackageStars
+      parameters:
+        - $ref: "#/components/parameters/PackageIDParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stars:
+                    type: integer
+                    nullable: false
+                  starred_by_user:
+                    type: boolean
+                    nullable: false
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      tags:
+        - Packages
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Toggle package's star
+      description: Toggle package's star
+      operationId: togglePackageStar
+      parameters:
+        - $ref: "#/components/parameters/PackageIDParam"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/{packageID}/{version}/security-report":
+    get:
+      tags:
+        - Packages
+      summary: Get package security report
+      description: Get package security report
+      operationId: getPackageSecurityReport
+      parameters:
+        - $ref: "#/components/parameters/PackageIDParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                nullable: false
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/{packageID}/{version}/values":
+    get:
+      tags:
+        - Packages
+      summary: Get chart values
+      description: Get chart values
+      operationId: getChartValues
+      parameters:
+        - $ref: "#/components/parameters/PackageIDParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/yaml:
+              schema:
+                type: string
+                nullable: false
+                example: |
+                  # Values
+                  global:
+                    image: ""
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/{packageID}/{version}/values-schema":
+    get:
+      tags:
+        - Packages
+      summary: Get package values schema
+      description: Get package values schema
+      operationId: getPackageValuesSchema
+      parameters:
+        - $ref: "#/components/parameters/PackageIDParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                nullable: false
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/{packageID}/changelog":
+    get:
+      tags:
+        - Packages
+      summary: Get package changelogs
+      description: Get package changelogs
+      operationId: getPackageChangelog
+      parameters:
+        - $ref: "#/components/parameters/PackageIDParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - version
+                    - ts
+                    - contains_security_updates
+                    - prerelease
+                  properties:
+                    version:
+                      type: string
+                      nullable: false
+                    ts:
+                      type: integer
+                      nullable: false
+                    changes:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - description
+                        properties:
+                          description:
+                            type: string
+                            nullable: false
+                          kind:
+                            $ref: "#/components/schemas/ChangelogItemKind"
+                          links:
+                            type: array
+                            items:
+                              type: object
+                              required:
+                                - name
+                                - url
+                              properties:
+                                name:
+                                  type: string
+                                  nullable: false
+                                url:
+                                  type: string
+                                  format: uri
+                                  nullable: false
+                            nullable: false
+                      nullable: false
+                    contains_security_updates:
+                      type: boolean
+                      nullable: false
+                    prerelease:
+                      type: boolean
+                      nullable: false
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/{packageID}/{version}/templates":
+    get:
+      tags:
+        - Packages
+      summary: Get the templates for a Helm chart package
+      description: Get the templates for a Helm chart package
+      operationId: getHelmChartTemplates
+      parameters:
+        - $ref: "#/components/parameters/PackageIDParam"
+        - $ref: "#/components/parameters/VersionParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - templates
+                  - values
+                properties:
+                  templates:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - name
+                        - data
+                      properties:
+                        name:
+                          type: string
+                          nullable: false
+                        data:
+                          type: string
+                          format: byte
+                          nullable: false
+                  values:
+                    type: object
+                    nullable: false
+                    additionalProperties: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/packages/{packageID}/views":
+    get:
+      tags:
+        - Packages
+      summary: Get the views of the package provided
+      description: Get the views of the package provided
+      operationId: getPackageViews
+      parameters:
+        - $ref: "#/components/parameters/PackageIDParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                nullable: false
+                additionalProperties: true
+                example:
+                  "1.0.1":
+                    "2021-12-09": 12
+                    "2021-12-08": 30
+                  "1.0.0":
+                    "2021-12-09": 2
+                    "2021-12-08": 5
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /subscriptions:
+    get:
+      tags:
+        - Subscriptions
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Get user's subscriptions
+      description: Get user's subscriptions
+      operationId: getUserSubscriptions
+      parameters:
+        - $ref: "#/components/parameters/OffsetParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: ""
+          headers:
+            Pagination-Total-Count:
+              schema:
+                type: string
+              description: Total number of subscriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - package_id
+                    - name
+                    - normalized_name
+                    - repository
+                    - event_kinds
+                  properties:
+                    package_id:
+                      type: string
+                      format: uuid
+                      nullable: false
+                    name:
+                      type: string
+                      nullable: false
+                      example: pkg1
+                    normalized_name:
+                      type: string
+                      nullable: false
+                      example: pkg1
+                    logo_image_id:
+                      type: string
+                      nullable: false
+                      example: 12345abcde
+                    repository:
+                      $ref: "#/components/schemas/RepositorySummary"
+                    event_kinds:
+                      type: array
+                      items:
+                        $ref: "#/components/schemas/EventKindId"
+                      nullable: false
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Subscriptions
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Add subscription
+      description: Add subscription
+      operationId: addPackageSubscription
+      requestBody:
+        $ref: "#/components/requestBodies/SubscriptionBody"
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Subscriptions
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Delete subscription
+      description: Delete subscription
+      operationId: deletePackageSubscription
+      parameters:
+        - $ref: "#/components/parameters/PackageIDQueryParam"
+        - $ref: "#/components/parameters/EventKindParam"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/subscriptions/{packageID}":
+    get:
+      tags:
+        - Subscriptions
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Get user's subscriptions for the given package
+      description: Get user's subscriptions for the given package
+      operationId: getPackageUserSubscriptions
+      parameters:
+        - $ref: "#/components/parameters/PackageIDParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - event_kind
+                  properties:
+                    event_kind:
+                      $ref: "#/components/schemas/EventKindId"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /subscriptions/opt-out:
+    get:
+      tags:
+        - Subscriptions
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Get user's opt-out entries
+      description: Get user's opt-out entries
+      operationId: getUserOptOutEntries
+      parameters:
+        - $ref: "#/components/parameters/OffsetParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: ""
+          headers:
+            Pagination-Total-Count:
+              schema:
+                type: string
+              description: Total number of user's opt-out entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - opt_out_id
+                    - repository
+                    - event_kind
+                  properties:
+                    opt_out_id:
+                      type: string
+                      format: uuid
+                      nullable: false
+                    repository:
+                      $ref: "#/components/schemas/RepositorySummary"
+                    event_kind:
+                      $ref: "#/components/schemas/EventKindId"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Subscriptions
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Add opt-out entry
+      description: Add opt-out entry
+      operationId: addOptOutEntry
+      requestBody:
+        $ref: "#/components/requestBodies/OptOutBody"
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/subscriptions/opt-out/{optOutID}":
+    delete:
+      tags:
+        - Subscriptions
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Delete opt-out entry
+      description: Delete opt-out entry
+      operationId: deleteOptOutEntry
+      parameters:
+        - $ref: "#/components/parameters/OptOutIDParam"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /webhooks/user:
+    get:
+      tags:
+        - Webhooks
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Get user's webhooks
+      description: Get user's webhooks
+      operationId: getUserWebhooks
+      responses:
+        "200":
+          description: ""
+          headers:
+            Pagination-Total-Count:
+              schema:
+                type: string
+              description: Total number of user's webhooks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Webhook"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Webhooks
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Add user's webhook
+      description: Add user's webhook
+      operationId: addUserWebhook
+      requestBody:
+        $ref: "#/components/requestBodies/WebhookBody"
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/webhooks/user/{webhookID}":
+    get:
+      tags:
+        - Webhooks
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Get user's webhook
+      description: Get user's webhook
+      operationId: getUserWebhookDetail
+      parameters:
+        - $ref: "#/components/parameters/WebhookIDParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Webhook"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      tags:
+        - Webhooks
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Update user's webhook
+      description: Update user's webhook
+      operationId: updateUserWebhook
+      parameters:
+        - $ref: "#/components/parameters/WebhookIDParam"
+      requestBody:
+        $ref: "#/components/requestBodies/WebhookBody"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Webhooks
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Delete user's webhook
+      description: Delete user's webhook
+      operationId: deleteUserWebhook
+      parameters:
+        - $ref: "#/components/parameters/WebhookIDParam"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/webhooks/org/{orgName}":
+    get:
+      tags:
+        - Webhooks
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Get organization's webhooks
+      description: Get organization's webhooks
+      operationId: getOrganizationWebhooks
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+      responses:
+        "200":
+          description: ""
+          headers:
+            Pagination-Total-Count:
+              schema:
+                type: string
+              description: Total number of organization's webhooks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Webhook"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Webhooks
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Add organization's webhook
+      description: Add organization's webhook
+      operationId: addOrganizationWebhook
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+      requestBody:
+        $ref: "#/components/requestBodies/WebhookBody"
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/webhooks/org/{orgName}/{webhookID}":
+    get:
+      tags:
+        - Webhooks
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Get organization's webhook
+      description: Get organization's webhook
+      operationId: getOrganizationWebhookDetails
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+        - $ref: "#/components/parameters/WebhookIDParam"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Webhook"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      tags:
+        - Webhooks
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Update organization's webhook
+      description: Update organization's webhook
+      operationId: updateOrganizationWebhook
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+        - $ref: "#/components/parameters/WebhookIDParam"
+      requestBody:
+        $ref: "#/components/requestBodies/WebhookBody"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Webhooks
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Delete organization's webhook
+      description: Delete organization's webhook
+      operationId: deleteOrganizationWebhook
+      parameters:
+        - $ref: "#/components/parameters/OrgNameParam"
+        - $ref: "#/components/parameters/WebhookIDParam"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /webhooks/test:
+    post:
+      tags:
+        - Webhooks
+      security:
+        - ApiKeyId: []
+          ApiKeySecret: []
+      summary: Trigger webhook test
+      description: Trigger webhook test
+      operationId: triggerWebhookTest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookTest"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/check-availability/{resourceKind}":
+    head:
+      tags:
+        - Availability checks
+      summary: Check the availability of a given value for the provided resource kind
+      description: Check the availability of a given value for the provided resource kind
+      operationId: checkAvailability
+      parameters:
+        - $ref: "#/components/parameters/ResourceKindNameParam"
+        - in: query
+          name: v
+          schema:
+            type: string
+          required: true
+          description: Value to check
+      responses:
+        "204":
+          description: "Found, the value exists, and is not free to use"
+        "404":
+          description: "Not found, the value does not exist, and is free to use"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /stats:
+    get:
+      tags:
+        - Stats
+      summary: Get Artifact Hub stats
+      description: Get Artifact Hub stats
+      operationId: getArtifactHubStats
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - generated_at
+                  - packages
+                  - snapshots
+                  - repositories
+                  - organizations
+                  - users
+                properties:
+                  generated_at:
+                    type: integer
+                    nullable: false
+                  packages:
+                    type: object
+                    required:
+                      - total
+                    properties:
+                      total:
+                        type: integer
+                        nullable: false
+                      running_total:
+                        type: array
+                        items:
+                          type: array
+                          items:
+                            type: integer
+                        nullable: false
+                      created_monthly:
+                        type: array
+                        items:
+                          type: array
+                          items:
+                            type: integer
+                        nullable: false
+                      views_daily:
+                        type: array
+                        items:
+                          type: array
+                          items:
+                            type: integer
+                        nullable: false
+                  repositories:
+                    type: object
+                    required:
+                      - total
+                    properties:
+                      total:
+                        type: integer
+                        nullable: false
+                      running_total:
+                        type: array
+                        items:
+                          type: array
+                          items:
+                            type: integer
+                        nullable: false
+                      created_monthly:
+                        type: array
+                        items:
+                          type: array
+                          items:
+                            type: integer
+                        nullable: false
+                  snapshots:
+                    type: object
+                    required:
+                      - total
+                    properties:
+                      total:
+                        type: integer
+                        nullable: false
+                      running_total:
+                        type: array
+                        items:
+                          type: array
+                          items:
+                            type: integer
+                        nullable: false
+                      created_monthly:
+                        type: array
+                        items:
+                          type: array
+                          items:
+                            type: integer
+                        nullable: false
+                  organizations:
+                    type: object
+                    required:
+                      - total
+                    properties:
+                      total:
+                        type: integer
+                        nullable: false
+                      running_total:
+                        type: array
+                        items:
+                          type: array
+                          items:
+                            type: integer
+                        nullable: false
+                  users:
+                    type: object
+                    required:
+                      - total
+                    properties:
+                      total:
+                        type: integer
+                        nullable: false
+                      running_total:
+                        type: array
+                        items:
+                          type: array
+                          items:
+                            type: integer
+                        nullable: false
+                example:
+                  generated_at: 1615980004171
+                  packages:
+                    total: 969
+                    running_total:
+                      - - 1585612800000
+                        - 917
+                      - - 1585872000000
+                        - 918
+                      - - 1586736000000
+                        - 937
+                      - - 1586908800000
+                        - 938
+                      - - 1586995200000
+                        - 949
+                      - - 1587340800000
+                        - 953
+                      - - 1587427200000
+                        - 955
+                      - - 1587513600000
+                        - 969
+                    created_monthly:
+                      - - 1583020800000
+                        - 917
+                      - - 1585699200000
+                        - 52
+                    views_daily:
+                      - - 1639731010000
+                        - 800
+                      - - 1639644610000
+                        - 820
+                  snapshots:
+                    total: 3998
+                    running_total:
+                      - - 1585612800000
+                        - 3906
+                      - - 1585699200000
+                        - 3922
+                      - - 1585785600000
+                        - 3935
+                      - - 1585872000000
+                        - 3948
+                      - - 1586044800000
+                        - 3951
+                      - - 1586131200000
+                        - 3959
+                      - - 1586217600000
+                        - 3981
+                      - - 1586304000000
+                        - 3998
+                    created_monthly:
+                      - - 1583020800000
+                        - 3906
+                      - - 1585699200000
+                        - 92
+                  repositories:
+                    total: 181
+                    running_total:
+                      - - 1585612800000
+                        - 172
+                      - - 1585872000000
+                        - 173
+                      - - 1586736000000
+                        - 176
+                      - - 1586908800000
+                        - 177
+                      - - 1586995200000
+                        - 181
+                  organizations:
+                    total: 8
+                    running_total:
+                      - - 1585612800000
+                        - 3
+                      - - 1585785600000
+                        - 6
+                      - - 1585872000000
+                        - 7
+                      - - 1586217600000
+                        - 8
+                  users:
+                    total: 9
+                    running_total:
+                      - - 1584403200000
+                        - 3
+                      - - 1584489600000
+                        - 5
+                      - - 1584576000000
+                        - 6
+                      - - 1584662400000
+                        - 8
+                      - - 1584921600000
+                        - 9
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /harbor-replication:
+    get:
+      tags:
+        - Integrations
+      summary: Get Harbor replication dump
+      description: Get Harbor replication dump
+      operationId: getHarborReplicationDump
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - repository
+                    - package
+                    - version
+                    - url
+                properties:
+                  repository:
+                    type: string
+                    nullable: false
+                  package:
+                    type: string
+                    nullable: false
+                  version:
+                    type: string
+                    nullable: false
+                  url:
+                    type: string
+                    format: uri
+                    nullable: false
+                example:
+                  - repository: bitnami
+                    package: nginx-ingress-controller
+                    version: 5.6.10
+                    url: https://charts.bitnami.com/bitnami/nginx-ingress-controller-5.6.10.tgz
+                  - repository: bitnami
+                    package: mediawiki
+                    version: 6.3.6
+                    url: https://charts.bitnami.com/bitnami/mediawiki-6.3.6.tgz
+                  - repository: crossplane
+                    package: crossplane
+                    version: 0.0.0-793.c9c71f8
+                    url: https://charts.crossplane.io/master/crossplane-0.0.0-793.c9c71f8.tgz
+                  - repository: choerodon
+                    package: devops-service
+                    version: 0.22.0
+                    url: https://openchart.choerodon.com.cn/choerodon/c7n/charts/devops-service-0.22.0.tgz
+                  - repository: t3n
+                    package: snipeit
+                    version: 2.4.0
+                    url: https://storage.googleapis.com/t3n-helm-charts/snipeit-2.4.0.tgz
+                  - repository: bitnami
+                    package: osclass
+                    version: 7.0.10
+                    url: https://charts.bitnami.com/bitnami/osclass-7.0.10.tgz
+                  - repository: choerodon
+                    package: asgard-service
+                    version: 0.13.0
+                    url: https://openchart.choerodon.com.cn/choerodon/c7n/charts/asgard-service-0.13.0.tgz
+                  - repository: bitnami
+                    package: osclass
+                    version: 3.2.0
+                    url: https://charts.bitnami.com/bitnami/osclass-3.2.0.tgz
+                  - repository: cronce
+                    package: torrentor
+                    version: 0.3.0
+                    url: https://charts.cronce.io/charts/torrentor-0.3.0.tgz
+                  - repository: banzaicloud-stable
+                    package: kafka-operator
+                    version: 0.0.12
+                    url: https://kubernetes-charts.banzaicloud.com/charts/kafka-operator-0.0.12.tgz
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /helm-exporter:
+    get:
+      tags:
+        - Integrations
+      summary: Get Helm exporter dump
+      description: Get the latest version available of all charts listed in Artifact Hub.
+      operationId: getHelmExporterDump
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - name
+                    - version
+                    - repository
+                properties:
+                  name:
+                    type: string
+                    nullable: false
+                  version:
+                    type: string
+                    nullable: false
+                  repository:
+                    type: object
+                    nullable: false
+                    required:
+                      - name
+                      - url
+                    properties:
+                      name:
+                        type: string
+                        nullable: false
+                      url:
+                        type: string
+                        format: uri
+                        nullable: false
+                example:
+                  - name: artifact-hub
+                    version: 1.2.0
+                    repository:
+                      name: artifact-hub
+                      url: https://artifacthub.github.io/helm-charts/
+                  - name: kube-prometheus-stack
+                    version: 18.0.6
+                    repository:
+                      url: https://prometheus-community.github.io/helm-charts
+                      name: prometheus-community
+                  - name: rabbitmq
+                    version: 8.22.0
+                    repository:
+                      url: https://charts.bitnami.com/bitnami
+                      name: bitnami
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /nova:
+    get:
+      tags:
+        - Integrations
+      summary: Get Nova dump
+      description: Get all charts listed in Artifact Hub.
+      operationId: getNovaDump
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - name
+                    - latest_version
+                properties:
+                  name:
+                    type: string
+                    nullable: false
+                  description:
+                    type: string
+                  home:
+                    type: string
+                  latest_version:
+                    type: string
+                    nullable: false
+                  links:
+                    type: array
+                    nullable: true
+                    items:
+                      $ref: "#/components/schemas/Link"
+                  logo:
+                    type: string
+                  maintainers:
+                    type: array
+                    nullable: true
+                    items:
+                      type: object
+                      required:
+                        - name
+                      properties:
+                        name:
+                          type: string
+                          nullable: false
+                  official:
+                    type: boolean
+                    nullable: true
+                  repository:
+                    type: object
+                    nullable: false
+                    required:
+                      - name
+                      - url
+                    properties:
+                      name:
+                        type: string
+                        nullable: false
+                      url:
+                        type: string
+                        format: uri
+                        nullable: false
+                      official:
+                        type: boolean
+                        nullable: true
+                      verified:
+                        type: boolean
+                        nullable: true
+                  versions:
+                    type: array
+                    nullable: false
+                    items:
+                      type: object
+                      nullable: false
+                      required:
+                        - pkg
+                        - app
+                      properties:
+                        pkg:
+                          type: string
+                          nullable: false
+                        app:
+                          type: string
+                        deprecated:
+                          type: boolean
+                          nullable: true
+                example:
+                  - name: package1
+                    description: description
+                    home: https://home.url
+                    latest_version: 1.0.0
+                    links:
+                      - name: link1
+                        url: https://link1
+                      - name: link2
+                        url: https://link2
+                    logo: https://logo.url
+                    maintainers:
+                      - name: name1
+                    official: true
+                    repository:
+                      name: repo1
+                      url: https://repo1.com
+                      verified: true
+                    versions:
+                      - pkg: 1.0.0
+                        app: 1.0.0
+                  - name: package2
+                    latest_version: 1.0.0
+                    repository:
+                      name: repo2
+                      url: https://repo2.com
+                    versions:
+                      - pkg: 1.0.0
+                        deprecated: true
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+components:
+  securitySchemes:
+    ApiKeyId:
+      type: apiKey
+      in: header
+      name: X-API-KEY-ID
+    ApiKeySecret:
+      type: apiKey
+      in: header
+      name: X-API-KEY-SECRET
+  schemas:
+    AuthorizerAction:
+      type: string
+      enum:
+        - all
+        - addOrganizationMember
+        - addOrganizationRepository
+        - deleteOrganization
+        - deleteOrganizationMember
+        - deleteOrganizationRepository
+        - getAuthorizationPolicy
+        - transferOrganizationRepository
+        - updateAuthorizationPolicy
+        - updateOrganization
+        - updateOrganizationRepository
+      description: >
+        Authorization policy action:
+
+        * `all` - All actions
+
+        * `addOrganizationMember` - Add member to organization
+
+        * `addOrganizationRepository` - Add repository to organization
+
+        * `deleteOrganization` - Delete organization
+
+        * `deleteOrganizationMember` - Delete member from organization
+
+        * `deleteOrganizationRepository` - Delete repository from organization
+
+        * `getAuthorizationPolicy` - Get authorization policy
+
+        * `transferOrganizationRepository` - Transfer repository from
+        organization
+
+        * `updateAuthorizationPolicy` - Update authorization policy
+
+        * `updateOrganization` - Update organization
+
+        * `updateOrganizationRepository` - Update repository from organization
+    AuthorizationPolicy:
+      type: object
+      required:
+        - authorization_enabled
+      properties:
+        authorization_enabled:
+          type: boolean
+          nullable: false
+        predefined_policy:
+          type: string
+          nullable: false
+          example: rbac.v1
+        custom_policy:
+          type: string
+          nullable: false
+          example: |
+            package artifacthub.authz
+
+            # By default, deny requests
+            default allow = false
+
+            # Allow the action if the user is allowed to perform it
+            allow {
+              # If user's role is owner
+              data.roles.owner.users[_] == input.user
+            }
+            allow {
+              # If user's role is allowed to perform this action
+              allowed_actions[_] == input.action
+            }
+
+            # Get user allowed actions
+            allowed_actions[action] {
+              user_roles[_] == "owner"
+              action := "all"
+            }
+            allowed_actions[action] {
+              action := data.roles[role].allowed_actions[_]
+              user_roles[_] == role
+            }
+
+            # Get user roles
+            user_roles[role] {
+              data.roles[role].users[_] == input.user
+            }
+        policy_data:
+          type: string
+          nullable: false
+          example: |
+            {
+              "roles": {
+                "owner": {
+                  "users": ["user1"]
+                },
+                "customRole1": {
+                  "users": ["member1", "member2"],
+                  "allowed_actions": ["addOrganizationMember", "addOrganizationRepository"]
+                }
+              }
+            }
+    ChangelogItemKind:
+      type: string
+      enum:
+        - added
+        - changed
+        - deprecated
+        - removed
+        - fixed
+        - security
+      nullable: false
+      description: |
+        Types of changes:
+          * `added` - New features
+          * `changed` - Changes in existing functionality
+          * `deprecated` - Soon-to-be removed features
+          * `removed` - Removed features
+          * `fixed` - Any bug fixed
+          * `security` - In case of vulnerabilities
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: error details
+    EventKindId:
+      type: integer
+      enum:
+        - 0
+        - 1
+        - 2
+        - 4
+      nullable: false
+      description: |
+        Event kind:
+          * `0` - New package release
+          * `1` - Security alerts
+          * `2` - Repository tracking errors
+          * `4` - Repository scanning errors
+    Facets:
+      type: object
+      required:
+        - filter_key
+        - title
+        - options
+      properties:
+        filter_key:
+          type: string
+          nullable: false
+        title:
+          type: string
+          nullable: false
+        options:
+          type: array
+          nullable: false
+          items:
+            type: object
+            required:
+              - id
+              - name
+              - total
+            properties:
+              id:
+                type: string
+                nullable: false
+              name:
+                type: string
+                nullable: false
+              total:
+                type: integer
+                nullable: false
+              filter_key:
+                type: string
+                nullable: false
+      example:
+        title: Publisher
+        filter_key: publisher
+        options:
+          - id: f41e7480-8d5c-40d3-9ba6-65ac0da8fc9c
+            name: Helm
+            total: 292
+            filter_key: org
+          - id: b771c9a8-0076-444c-ad5e-927abe14173d
+            name: Artifact Hub
+            total: 1
+            filter_key: org
+          - id: a70u69a8-0326-324c-fd3e-0iu87e14173d
+            name: user1
+            total: 3
+            filter_key: user
+    ArgoTemplate:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: false
+              properties:
+                template:
+                  type: string
+                  nullable: false
+                  example: >-
+                    apiVersion: argoproj.io/v1alpha1
+                    kind: WorkflowTemplate
+                    metadata:
+                      annotations:
+                        workflows.argoproj.io/description: This is a basic catalog example that simply
+                          prints "hello argo!".
+                        workflows.argoproj.io/maintainer: '@alexec'
+                        workflows.argoproj.io/tags: example
+                        workflows.argoproj.io/version: '>= 2.9.0'
+                      name: hello-world
+                argo/version:
+                  type: string
+                  example: "1.5.0"
+    BackstagePlugin:
+      $ref: "#/components/schemas/Package"
+    BootableContainer:
+      $ref: "#/components/schemas/Package"
+    ContainerImage:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: false
+              properties:
+                platforms:
+                  type: array
+                  items:
+                    type: string
+                    nullable: false
+                    example: darwin/amd64
+                alternative_locations:
+                  type: array
+                  items:
+                    type: string
+                    nullable: false
+                    example: public.ecr.aws/artifacthub/ah
+    CoreDNSPackage:
+      $ref: "#/components/schemas/Package"
+    FalcoPackage:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: false
+              properties:
+                rules:
+                  oneOf:
+                    - type: array
+                      items:
+                        type: object
+                        nullable: false
+                        properties:
+                          Name:
+                            type: string
+                          Raw:
+                            type: string
+                            example: |
+                              - macro: text
+                                condition: (evt.num < 0)
+                    - type: object
+                      nullable: false
+                      additionalProperties: true
+    GatekeeperPolicy:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            relative_path:
+              type: string
+              nullable: false
+              example: /general/allowedrepos
+            data:
+              type: object
+              nullable: false
+              properties:
+                template:
+                  type: string
+                  nullable: false
+                  example: >-
+                    apiVersion: templates.gatekeeper.sh/v1
+                    kind: ConstraintTemplate
+                    metadata:
+                      name: k8sallowedrepos
+                      annotations:
+                        metadata.gatekeeper.sh/title: "Kubernetes Allowed Repositories"
+                        description: >-
+                          Requires container images to begin with a string from the specified list.
+                examples:
+                  type: array
+                  nullable: false
+                  items:
+                    type: object
+                    nullable: false
+                    properties:
+                      name:
+                        type: string
+                        nullable: false
+                      cases:
+                        type: array
+                        nullable: false
+                        items:
+                          type: object
+                          nullable: false
+                          properties:
+                            name:
+                              type: string
+                              nullable: false
+                            path:
+                              type: string
+                              nullable: false
+                            content:
+                              type: string
+                              nullable: false
+                  example:
+                    - name: memory-ratio-only
+                      cases:
+                        - name: constraint
+                          path: samples/container-must-meet-ratio/constraint.yaml
+                          content: >-
+                            apiVersion: constraints.gatekeeper.sh/v1beta1
+    HelmPackage:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            sign_key:
+              type: object
+              nullable: false
+              properties:
+                fingerprint:
+                  type: string
+                  nullable: false
+                  example: "0011223344"
+                url:
+                  type: string
+                  format: uri
+                  example: https://key.url
+            crds:
+              type: array
+              nullable: false
+              items:
+                type: object
+                required:
+                  - kind
+                  - name
+                  - version
+                  - description
+                  - displayName
+                properties:
+                  kind:
+                    type: string
+                    nullable: false
+                  name:
+                    type: string
+                    nullable: false
+                  version:
+                    type: string
+                    nullable: false
+                  description:
+                    type: string
+                    nullable: false
+                  displayName:
+                    type: string
+                    nullable: false
+            crds_examples:
+              type: array
+              nullable: false
+              items:
+                type: object
+                additionalProperties: true
+            data:
+              type: object
+              nullable: false
+              properties:
+                apiVersion:
+                  type: string
+                  example: v2
+                  nullable: false
+                type:
+                  type: string
+                  example: application
+                  nullable: false
+                kubeVersion:
+                  type: string
+                  example: ">=1.16.0-0"
+                  nullable: false
+                dependencies:
+                  type: array
+                  items:
+                    type: object
+                    nullable: false
+                    required:
+                      - name
+                      - version
+                      - repository
+                    properties:
+                      name:
+                        type: string
+                        nullable: false
+                        example: mysql
+                      version:
+                        type: string
+                        nullable: false
+                        example: 1.6.4
+                      repository:
+                        type: string
+                        nullable: false
+                        example: "http://repo.url"
+    HelmPluginPackage:
+      $ref: "#/components/schemas/Package"
+    HeadlampPluginPackage:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: false
+              properties:
+                headlamp/plugin/archive-url:
+                  type: string
+                  example: "https://headlamp.dev/sample-plugin-url"
+                headlamp/plugin/distro-compat:
+                  type: string
+                  example: "in-cluster,web,docker-desktop"
+                headlamp/plugin/version-compat:
+                  type: string
+                  example: ">=1.2.3"
+                headlamp/plugin/archive-checksum:
+                  type: string
+                  example: "sha256:123456..."
+    InspektorGadgetPackage:
+      $ref: "#/components/schemas/Package"
+    KagentPackage:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            sign_key:
+              type: object
+              nullable: false
+              properties:
+                fingerprint:
+                  type: string
+                  nullable: false
+                  example: "0011223344"
+                url:
+                  type: string
+                  format: uri
+                  example: https://key.url
+            crds:
+              type: array
+              nullable: false
+              items:
+                type: object
+                required:
+                  - kind
+                  - name
+                  - version
+                  - description
+                  - displayName
+                properties:
+                  kind:
+                    type: string
+                    nullable: false
+                  name:
+                    type: string
+                    nullable: false
+                  version:
+                    type: string
+                    nullable: false
+                  description:
+                    type: string
+                    nullable: false
+                  displayName:
+                    type: string
+                    nullable: false
+            crds_examples:
+              type: array
+              nullable: false
+              items:
+                type: object
+                additionalProperties: true
+            data:
+              type: object
+              nullable: false
+              properties:
+                apiVersion:
+                  type: string
+                  example: v2
+                  nullable: false
+                type:
+                  type: string
+                  example: application
+                  nullable: false
+                kubeVersion:
+                  type: string
+                  example: ">=1.16.0-0"
+                  nullable: false
+                dependencies:
+                  type: array
+                  items:
+                    type: object
+                    nullable: false
+                    required:
+                      - name
+                      - version
+                      - repository
+                    properties:
+                      name:
+                        type: string
+                        nullable: false
+                        example: mysql
+                      version:
+                        type: string
+                        nullable: false
+                        example: 1.6.4
+                      repository:
+                        type: string
+                        nullable: false
+                        example: "http://repo.url"
+    KCLPackage:
+      $ref: "#/components/schemas/Package"
+    KedaScalerPackage:
+      $ref: "#/components/schemas/Package"
+    KeptnIntegrationsPackage:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: false
+              properties:
+                keptn/version:
+                  type: string
+                  example: "0.1.0"
+                keptn/kind:
+                  type: string
+                  example: "service,sli-provider"
+    KnativeClientPluginsPackage:
+      $ref: "#/components/schemas/Package"
+    KrewPluginsPackage:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: false
+              properties:
+                platforms:
+                  type: array
+                  items:
+                    type: string
+                    nullable: false
+                    example: darwin/amd64
+                manifestRaw:
+                  type: string
+                  additionalProperties:
+                    type: string
+                  example: "apiVersion: krew.googlecontainertools.github.com/v1alpha2"
+    KubeArmorPoliciesPackage:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: false
+              properties:
+                policies:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  example:
+                    system/ksc-misconfig-service.yaml: |
+                      apiVersion: security.kubearmor.com/v1
+                      kind: KubeArmorPolicy
+    KubewardenPoliciesPackage:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: false
+              properties:
+                kubewarden/resources:
+                  type: string
+                  example: "Pod"
+                kubewarden/mutation:
+                  type: string
+                  example: "true"
+    KyvernoPolicy:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            relative_path:
+              type: string
+              nullable: false
+              example: /general/allowedrepos
+            data:
+              type: object
+              nullable: false
+              properties:
+                policy:
+                  type: string
+                  nullable: false
+                  example: >-
+                    apiVersion: kyverno.io/v1
+                    kind: ClusterPolicy
+                    metadata:
+                      name: add-certificates-volume
+                      annotations:
+                        policies.kyverno.io/title: Add Certificates as a Volume
+                        policies.kyverno.io/category: Sample
+                        policies.kyverno.io/subject: Pod,Volume
+                kyverno/subject:
+                  type: string
+                  example: "Pod, Volume"
+                kyverno/version:
+                  type: string
+                  example: "1.5.0"
+                kyverno/kubernetesVersion:
+                  type: string
+                  example: "1.21"
+                kyverno/category:
+                  type: string
+                  example: "OpenShift"
+    Link:
+      type: object
+      nullable: false
+      required:
+        - url
+        - name
+      properties:
+        url:
+          type: string
+          format: uri
+          nullable: false
+          example: "http://url"
+        name:
+          type: string
+          nullable: false
+          example: link
+    Maintainer:
+      type: object
+      nullable: false
+      required:
+        - name
+        - email
+      properties:
+        maintainer_id:
+          type: string
+          format: uuid
+          nullable: false
+        name:
+          type: string
+          nullable: false
+          example: maintainer1
+        email:
+          type: string
+          nullable: false
+          example: maintainer@email.com
+    Member:
+      type: object
+      required:
+        - alias
+        - confirmed
+      properties:
+        alias:
+          type: string
+          nullable: false
+          example: jdoe
+        first_name:
+          type: string
+          nullable: false
+          example: John
+        last_name:
+          type: string
+          nullable: false
+          example: Doe
+        confirmed:
+          type: boolean
+          nullable: false
+          example: true
+    MesheryDesign:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: false
+              properties:
+                design:
+                  type: string
+                  additionalProperties:
+                    type: string
+                  example: "name: sample"
+    OLMPackage:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            crds:
+              type: array
+              nullable: false
+              items:
+                type: object
+                nullable: false
+                required:
+                  - kind
+                  - name
+                  - version
+                  - description
+                  - displayName
+                properties:
+                  kind:
+                    type: string
+                    nullable: false
+                  name:
+                    type: string
+                    nullable: false
+                  version:
+                    type: string
+                    nullable: false
+                  description:
+                    type: string
+                    nullable: false
+                  displayName:
+                    type: string
+                    nullable: false
+            crds_examples:
+              type: array
+              nullable: false
+              items:
+                type: object
+                additionalProperties: true
+            data:
+              type: object
+              required:
+                - isGlobalOperator
+              properties:
+                isGlobalOperator:
+                  type: boolean
+                  nullable: false
+                customResourcesDefinitions:
+                  type: array
+                  nullable: false
+                  items:
+                    type: object
+                    required:
+                      - kind
+                      - name
+                      - version
+                      - description
+                      - displayName
+                    properties:
+                      kind:
+                        type: string
+                        nullable: false
+                      name:
+                        type: string
+                        nullable: false
+                      version:
+                        type: string
+                        nullable: false
+                      description:
+                        type: string
+                        nullable: false
+                      displayName:
+                        type: string
+                        nullable: false
+                customResourcesDefinitionsExamples:
+                  type: string
+                  nullable: false
+                  example: |-
+                    [{"apiVersion": v1alpha
+                    , "kind": CustomResource
+                    , "spec": {
+                      "replicas": 1
+                      }
+                    }}]
+    OPAPackage:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                policies:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  example:
+                    policy1: |
+                      - macro: text
+                        condition: (evt.num < 0)
+    OpencostPlugin:
+      $ref: "#/components/schemas/Package"
+    RadiusRecipe:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                recipe:
+                  type: object
+                  nullable: false
+                  additionalProperties: true
+    TBActionPackage:
+      $ref: "#/components/schemas/Package"
+    TektonPipelinePackage:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                pipelines.minVersion:
+                  type: string
+                  example: 2.0.0
+                manifestRaw:
+                  type: string
+                  additionalProperties:
+                    type: string
+                  example: "apiVersion: tekton.dev/v1beta1"
+                tasks:
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      type: string
+                      nullable: false
+                      example: task
+                    run_after:
+                      type: array
+                      nullable: false
+                      items:
+                        type: string
+                      example:
+                        - task1
+                        - task2
+                examples:
+                  type: object
+                  nullable: false
+                  additionalProperties: true
+                platforms:
+                  type: array
+                  items:
+                    type: string
+                    nullable: false
+                    example: darwin/amd64
+    TektonStepActionPackage:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                pipelines.minVersion:
+                  type: string
+                  example: 2.0.0
+                manifestRaw:
+                  type: string
+                  additionalProperties:
+                    type: string
+                  example: "apiVersion: tekton.dev/v1beta1"
+                examples:
+                  type: object
+                  nullable: false
+                  additionalProperties: true
+                platforms:
+                  type: array
+                  items:
+                    type: string
+                    nullable: false
+                    example: darwin/amd64
+    TektonTaskPackage:
+      allOf:
+        - $ref: "#/components/schemas/Package"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                pipelines.minVersion:
+                  type: string
+                  example: 2.0.0
+                manifestRaw:
+                  type: string
+                  additionalProperties:
+                    type: string
+                  example: "apiVersion: tekton.dev/v1beta1"
+                examples:
+                  type: object
+                  nullable: false
+                  additionalProperties: true
+                platforms:
+                  type: array
+                  items:
+                    type: string
+                    nullable: false
+                    example: darwin/amd64
+    Package:
+      allOf:
+        - $ref: "#/components/schemas/PackageBase"
+        - type: object
+          required:
+            - repository
+            - latest_version
+            - available_versions
+            - ts
+            - has_values_schema
+            - has_changelog
+            - contains_security_updates
+            - prerelease
+          properties:
+            repository:
+              $ref: "#/components/schemas/RepositorySummary"
+            is_operator:
+              type: boolean
+              nullable: false
+              example: false
+            latest_version:
+              type: string
+              nullable: false
+              example: 2.0.0
+            logo_url:
+              type: string
+              format: uri
+              nullable: false
+              example: "http://logo"
+            category:
+              $ref: "#/components/schemas/PackageCategoryId"
+            keywords:
+              type: array
+              nullable: false
+              items:
+                type: string
+              example:
+                - key1
+                - key2
+            home_url:
+              type: string
+              format: uri
+              nullable: false
+              example: "http://home"
+            readme:
+              type: string
+              nullable: false
+              example: "###Readme"
+            links:
+              type: array
+              nullable: false
+              items:
+                $ref: "#/components/schemas/Link"
+            available_versions:
+              type: array
+              nullable: false
+              items:
+                type: object
+                required:
+                  - version
+                  - contains_security_updates
+                  - prerelease
+                  - ts
+                properties:
+                  version:
+                    type: string
+                    nullable: false
+                    example: 1.0.0
+                  contains_security_updates:
+                    type: boolean
+                    nullable: false
+                  prerelease:
+                    type: boolean
+                    nullable: false
+                  ts:
+                    type: integer
+                    nullable: false
+                    example: 1618431211
+            maintainers:
+              type: array
+              nullable: false
+              items:
+                $ref: "#/components/schemas/Maintainer"
+            default_channel:
+              type: string
+              nullable: false
+              example: stable
+            channels:
+              type: array
+              nullable: false
+              items:
+                type: object
+                nullable: false
+                properties:
+                  name:
+                    type: string
+                    nullable: false
+                    example: stable
+                  version:
+                    type: string
+                    nullable: false
+                    example: 2.0.0
+            provider:
+              type: string
+              nullable: false
+              example: Provider 1
+            containers_images:
+              type: array
+              items:
+                type: object
+                nullable: false
+                required:
+                  - image
+                properties:
+                  image:
+                    type: string
+                    nullable: false
+                    example: "url.io/name/operator:v0.2.0"
+                  name:
+                    type: string
+                    nullable: false
+                  whitelisted:
+                    type: boolean
+                    nullable: false
+                    example: false
+            ts:
+              type: integer
+              nullable: false
+              example: 1552082346
+            capabilities:
+              type: string
+              nullable: false
+              example: seamless upgrades
+            security_report_created_at:
+              type: integer
+              nullable: false
+            has_values_schema:
+              type: boolean
+              nullable: false
+            has_changelog:
+              type: boolean
+              nullable: false
+            content_url:
+              type: string
+              format: uri
+              nullable: false
+            contains_security_updates:
+              type: boolean
+              nullable: false
+            prerelease:
+              type: boolean
+              nullable: false
+            recommendations:
+              type: array
+              items:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                    example: https://artifacthub.io/packages/helm/artifact-hub/artifact-hub
+                    nullable: false
+              nullable: false
+            stats:
+              type: object
+              nullable: false
+              required:
+                - subscriptions
+                - webhooks
+              properties:
+                subscriptions:
+                  type: integer
+                  nullable: false
+                webhooks:
+                  type: integer
+                  nullable: false
+    PackageBase:
+      type: object
+      required:
+        - package_id
+        - name
+        - normalized_name
+        - stars
+        - version
+        - ts
+        - repository
+      properties:
+        package_id:
+          type: string
+          format: uuid
+          nullable: false
+        name:
+          type: string
+          nullable: false
+          example: pkg1
+        normalized_name:
+          type: string
+          nullable: false
+          example: pkg1
+        logo_image_id:
+          type: string
+          nullable: false
+          example: 12345abcde
+        display_name:
+          type: string
+          nullable: false
+          example: Package 1
+        description:
+          type: string
+          nullable: false
+          example: This is a package sample
+        version:
+          type: string
+          nullable: false
+          example: 1.0.0
+        app_version:
+          type: string
+          nullable: false
+          example: 0.1.0
+        license:
+          type: string
+          nullable: false
+          example: MIT
+        deprecated:
+          type: boolean
+          nullable: false
+          example: false
+        signed:
+          type: boolean
+          nullable: false
+          example: false
+        signatures:
+          type: array
+          items:
+            type: string
+            enum:
+              - prov
+              - cosign
+            nullable: false
+        official:
+          type: boolean
+          nullable: false
+        cncf:
+          type: boolean
+          nullable: true
+        ts:
+          type: integer
+          nullable: false
+        repository:
+          $ref: "#/components/schemas/RepositorySummary"
+        security_report_summary:
+          type: object
+          nullable: false
+          properties:
+            critical:
+              type: number
+              nullable: false
+            high:
+              type: number
+              nullable: false
+            medium:
+              type: number
+              nullable: false
+            low:
+              type: number
+              nullable: false
+            unknown:
+              type: number
+              nullable: false
+        all_containers_images_whitelisted:
+          type: boolean
+          nullable: false
+          example: false
+        production_organizations_count:
+          type: number
+          nullable: false
+    PackageCategoryId:
+      type: integer
+      enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+      nullable: false
+      description: |
+        Package category:
+          * `1` - AI / Machine learning
+          * `2` - Database
+          * `3` - Integration and delivery
+          * `4` - Monitoring and logging
+          * `5` - Networking
+          * `6` - Security
+          * `7` - Storage
+          * `8` - Streaming and messaging
+    PackageSummary:
+      allOf:
+        - $ref: "#/components/schemas/PackageBase"
+        - type: object
+          properties:
+            category:
+              $ref: "#/components/schemas/PackageCategoryId"
+            stars:
+              type: integer
+              nullable: false
+              example: 3
+    Repository:
+      allOf:
+        - $ref: "#/components/schemas/RepositorySummary"
+        - type: object
+          required:
+            - digest
+            - last_tracking_ts
+            - last_scanning_ts
+            - disabled
+          properties:
+            digest:
+              type: string
+              nullable: false
+            last_tracking_ts:
+              type: integer
+              nullable: false
+            last_tracking_errors:
+              type: string
+              nullable: false
+              example: Error
+            last_scanning_ts:
+              type: integer
+              nullable: false
+            last_scanning_errors:
+              type: string
+              nullable: false
+              example: Error
+            disabled:
+              type: boolean
+              nullable: false
+            branch:
+              type: string
+              nullable: false
+            data:
+              type: object
+              nullable: false
+              properties:
+                tags:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - name
+                    properties:
+                      name:
+                        type: string
+                        nullable: false
+                        example: stable
+                      mutable:
+                        type: boolean
+                        nullable: false
+    RepositoryKind:
+      type: integer
+      enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        - 11
+        - 12
+        - 13
+        - 14
+        - 15
+        - 16
+        - 17
+        - 18
+        - 19
+        - 20
+        - 21
+        - 22
+        - 23
+        - 24
+        - 25
+        - 26
+        - 27
+      description: |
+        Repository kind:
+          * `0` - Helm charts
+          * `1` - Falco rules
+          * `2` - OPA policies
+          * `3` - OLM operators
+          * `4` - Tinkerbell actions
+          * `5` - Krew kubectl plugins
+          * `6` - Helm plugins
+          * `7` - Tekton tasks
+          * `8` - KEDA scalers
+          * `9` - Core DNS plugins
+          * `10` - Keptn integrations
+          * `11` - Tekton pipelines
+          * `12` - Container images
+          * `13` - Kubewarden policies
+          * `14` - Gatekeeper policies
+          * `15` - Kyverno policies
+          * `16` - Knative client plugins
+          * `17` - Backstage plugins
+          * `18` - Argo templates
+          * `19` - KubeArmor templates
+          * `20` - KCL packages
+          * `21` - Headlamp plugins
+          * `22` - Inspektor gadgets
+          * `23` - Tekton stepactions
+          * `24` - Meshery designs
+          * `25` - Opencost plugins
+          * `26` - Radius recipes
+          * `27` - Bootable containers
+          * `28` - Kagent agents
+    RepositoryKindParam:
+      type: string
+      enum:
+        - helm
+        - opa
+        - falco
+        - olm
+        - tbaction
+        - krew
+        - helm-plugin
+        - tekton-task
+        - keda-scaler
+        - coredns
+        - keptn
+        - tekton-pipeline
+        - container
+        - kubewarden
+        - gatekeeper
+        - kyverno
+        - knative-client-plugin
+        - backstage
+        - argo-template
+        - kubearmor
+        - kcl
+        - headlamp
+        - inspektor-gadget
+        - tekton-stepaction
+        - meshery
+        - opencost
+        - radius
+        - bootc
+        - kagent
+      description: |
+        Repository kind name:
+        * `helm` - Helm charts
+        * `falco` - Falco rules
+        * `opa` - OPA policies
+        * `olm` - OLM operators
+        * `tbaction` - Tinkerbell actions
+        * `krew` - Krew kubectl plugins
+        * `helm-plugin` - Helm plugins
+        * `tekton` - Tekton tasks
+        * `keda-scaler` - KEDA scalers
+        * `coredns` - Core DNS plugins
+        * `keptn` - Keptn integrations
+        * `tekton-pipeline` - Tekton pipelines
+        * `container` - Container images
+        * `kubewarden` - Kubewarden policies
+        * `gatekeeper` - Gatekeeper policies
+        * `kyverno` - Kyverno policies
+        * `knative-client-plugin` - Knative client plugins
+        * `backstage` - Backstage plugins
+        * `argo-template` - Argo templates
+        * `kubearmor` - KubeArmor policies
+        * `kcl` - KCL packages
+        * `headlamp` - Headlamp plugins
+        * `inspektor-gadget` - Inspektor gadgets
+        * `tekton-stepaction` - Tekton stepactions
+        * `meshery` - Meshery designs
+        * `opencost` - Opencost plugins
+        * `radius` - Radius recipes
+        * `bootc` - Bootable containers
+        * `kagent` - Kagent agents
+    RepositorySummary:
+      type: object
+      required:
+        - repository_id
+        - kind
+        - name
+        - url
+        - verified_publisher
+        - official
+        - scanner_disabled
+      properties:
+        repository_id:
+          type: string
+          format: uuid
+        kind:
+          $ref: "#/components/schemas/RepositoryKind"
+        name:
+          type: string
+          nullable: false
+          example: repo1
+        display_name:
+          type: string
+          nullable: false
+          example: Repository 1
+        url:
+          type: string
+          format: uri
+          nullable: false
+          example: "http://repourl"
+        verified_publisher:
+          type: boolean
+          nullable: false
+        official:
+          type: boolean
+          nullable: false
+        cncf:
+          type: boolean
+          nullable: true
+        private:
+          type: boolean
+          nullable: false
+        scanner_disabled:
+          type: boolean
+          nullable: false
+          example: false
+        user_alias:
+          type: string
+          nullable: false
+          example: jdoe
+        organization_name:
+          type: string
+          nullable: false
+          example: org1
+        organization_display_name:
+          type: string
+          nullable: false
+          example: Organization 1
+      nullable: false
+    Organization:
+      allOf:
+        - $ref: "#/components/schemas/OrganizationSummary"
+        - type: object
+          required:
+            - members_count
+            - confirmed
+          properties:
+            members_count:
+              type: integer
+              nullable: false
+            confirmed:
+              type: boolean
+              nullable: false
+    OrganizationSummary:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          nullable: false
+          example: org1
+        display_name:
+          type: string
+          nullable: false
+          example: Organization 1
+        description:
+          type: string
+          nullable: false
+          example: description
+        home_url:
+          type: string
+          format: uri
+          nullable: false
+          example: "http://url"
+        logo_image_id:
+          type: string
+          nullable: false
+          example: 12345abcde
+    ProductionUsageOrganization:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          nullable: false
+          example: org1
+        display_name:
+          type: string
+          nullable: false
+          example: Organization 1
+        home_url:
+          type: string
+          format: uri
+          nullable: false
+          example: "http://url"
+        logo_image_id:
+          type: string
+          nullable: false
+          example: 12345abcde
+        used_in_production:
+          type: boolean
+          nullable: false
+    ResourceKindName:
+      type: string
+      enum:
+        - repositoryName
+        - repositoryURL
+        - organizationName
+        - userAlias
+      description: |
+        Resource kind name:
+          * `repositoryName` - Repository name
+          * `repositoryURL` - Repository URL
+          * `organizationName` - Organization name
+          * `userAlias` - User alias
+    User:
+      type: object
+      required:
+        - alias
+        - email
+        - password_set
+      properties:
+        alias:
+          type: string
+          nullable: false
+          example: jdoe
+        first_name:
+          type: string
+          nullable: false
+          example: John
+        last_name:
+          type: string
+          nullable: false
+          example: Doe
+        email:
+          type: string
+          format: email
+          nullable: false
+          example: jdoe@email.com
+        profile_image_id:
+          type: string
+          nullable: false
+          example: 12345abcde
+        password_set:
+          type: boolean
+          nullable: false
+        tfa_enabled:
+          type: boolean
+          nullable: false
+    Webhook:
+      allOf:
+        - $ref: "#/components/schemas/WebhookSummary"
+        - type: object
+          required:
+            - webhook_id
+            - packages
+            - last_notifications
+          properties:
+            webhook_id:
+              type: string
+              format: uuid
+              nullable: false
+            packages:
+              type: array
+              items:
+                $ref: "#/components/schemas/PackageSummary"
+              nullable: false
+            last_notifications:
+              type: array
+              items:
+                $ref: "#/components/schemas/WebhookNotification"
+              nullable: false
+    WebhookNotification:
+      type: object
+      required:
+        - notification_id
+        - created_at
+        - processed
+        - processed_at
+      properties:
+        notification_id:
+          type: string
+          format: uuid
+          nullable: false
+        created_at:
+          type: integer
+          nullable: false
+        processed:
+          type: boolean
+          nullable: false
+        processed_at:
+          type: integer
+          nullable: false
+        error:
+          type: string
+          nullable: false
+          example: error
+    WebhookSummary:
+      type: object
+      required:
+        - name
+        - url
+        - active
+      properties:
+        name:
+          type: string
+          nullable: false
+          example: webhook1
+        description:
+          type: string
+          nullable: false
+          example: description
+        url:
+          type: string
+          format: uri
+          nullable: false
+          example: "http://url"
+        secret:
+          type: string
+          nullable: false
+          example: 123abc
+        content_type:
+          type: string
+          nullable: false
+          example: application/json
+        template:
+          type: string
+          nullable: false
+          example: >-
+            {"text": "Package {{ .Package.Name }} version {{ .Package.Version }}
+            released! {{ .Package.URL }}"}
+        active:
+          type: boolean
+          nullable: false
+        event_kinds:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventKindId"
+          nullable: false
+    WebhookSummaryWithPackages:
+      allOf:
+        - $ref: "#/components/schemas/WebhookSummary"
+        - type: object
+          required:
+            - name
+            - url
+            - active
+            - event_kinds
+            - packages
+          properties:
+            packages:
+              type: array
+              items:
+                type: object
+                required:
+                  - package_id
+                properties:
+                  package_id:
+                    type: string
+                    format: uuid
+                    nullable: false
+              nullable: false
+    WebhookTest:
+      type: object
+      required:
+        - url
+        - event_kinds
+      properties:
+        url:
+          type: string
+          format: uri
+          nullable: false
+          example: "http://url"
+        content_type:
+          type: string
+          nullable: false
+          example: application/json
+        template:
+          type: string
+          nullable: false
+          example: >-
+            {"text": "Package {{ .Package.Name }} version {{ .Package.Version }}
+            released! {{ .Package.URL }}"}
+        event_kinds:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventKindId"
+          nullable: false
+          example:
+            - 0
+  parameters:
+    RepositoriesListParam:
+      in: query
+      name: repo
+      schema:
+        type: array
+        items:
+          type: string
+        example:
+          - repo1
+          - repo2
+      required: false
+      description: List of repository names
+    LicensesListParam:
+      in: query
+      name: license
+      schema:
+        type: array
+        items:
+          type: string
+        # https://spdx.org/licenses/
+        example:
+          - MIT
+          - Apache-2.0
+      required: false
+      description: List of SPDX identifiers
+    CapabilitiesListParam:
+      in: query
+      name: capabilities
+      schema:
+        type: array
+        items:
+          type: string
+        example:
+          - basic install
+          - seamless upgrades
+          - full lifecycle
+          - deep insights
+          - auto pilot
+      required: false
+      description: List of operator capability levels
+    DeprecatedParam:
+      in: query
+      name: deprecated
+      schema:
+        type: boolean
+        default: false
+      required: false
+      description: Whether to include deprecated packages or not
+    OperatorsParam:
+      in: query
+      name: operators
+      schema:
+        type: boolean
+      required: false
+      description: Whether to get only operators
+    VerifiedPublisherParam:
+      in: query
+      name: verified_publisher
+      schema:
+        type: boolean
+      required: false
+      description: Whether to get only verified publisher
+    CNCFParam:
+      in: query
+      name: cncf
+      schema:
+        type: boolean
+      required: false
+      description: Whether to get only packages published by CNCF projects
+    OfficialParam:
+      in: query
+      name: official
+      schema:
+        type: boolean
+      required: false
+      description: Whether to get only official repositories
+    SortParam:
+      in: query
+      name: sort
+      schema:
+        type: string
+        enum: ["relevance", "stars", "last_updated"]
+        example: relevance
+      required: false
+      description: Sort criteria
+    EventKindParam:
+      in: query
+      name: event_kind
+      required: true
+      schema:
+        $ref: "#/components/schemas/EventKindId"
+      description: Event kind
+    FacetsParam:
+      in: query
+      name: facets
+      schema:
+        type: boolean
+        default: false
+      required: true
+      description: Whether we should get facets or not
+    LimitParam:
+      in: query
+      name: limit
+      schema:
+        type: integer
+        default: 20
+        maximum: 60
+      required: false
+      description: The number of items to return
+    OffsetParam:
+      in: query
+      name: offset
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      required: false
+      description: The number of items to skip before starting to collect the result set
+    OrgNameParam:
+      in: path
+      name: orgName
+      schema:
+        type: string
+        example: org1
+      required: true
+      description: Organization name
+    OrgNameToParam:
+      in: query
+      name: org
+      required: false
+      schema:
+        type: string
+        example: org1
+      description: The org to transfer or from claiming the repository
+    OrgsListParam:
+      in: query
+      name: org
+      schema:
+        type: array
+        items:
+          type: string
+        example:
+          - org1
+          - org2
+      required: false
+      description: List of organization names
+    PackageCategoryListParam:
+      in: query
+      name: category
+      schema:
+        type: array
+        items:
+          type: integer
+          enum:
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+            - 6
+            - 7
+            - 8
+      required: false
+      description: |
+        Package category:
+          * `1` - AI / Machine learning
+          * `2` - Database
+          * `3` - Integration and delivery
+          * `4` - Monitoring and logging
+          * `5` - Networking
+          * `6` - Security
+          * `7` - Storage
+          * `8` - Streaming and messaging
+    PackageIDParam:
+      in: path
+      name: packageID
+      schema:
+        type: string
+        format: uuid
+      required: true
+      description: Package ID
+    PackageIDQueryParam:
+      in: query
+      name: packageID
+      schema:
+        type: string
+        format: uuid
+      required: true
+      description: Package ID
+    OptOutIDParam:
+      in: path
+      name: optOutID
+      schema:
+        type: string
+        format: uuid
+      required: true
+      description: Opt-out entry ID
+    RepositoryKindsListParam:
+      in: query
+      name: kind
+      schema:
+        type: array
+        items:
+          $ref: "#/components/schemas/RepositoryKind"
+      required: false
+      description: |
+        Repository kind:
+          * `0` - Helm charts
+          * `1` - Falco rules
+          * `2` - OPA policies
+          * `3` - OLM operators
+          * `4` - Tinkerbell actions
+          * `5` - Krew kubectl plugins
+          * `6` - Helm plugins
+          * `7` - Tekton tasks
+          * `8` - KEDA scalers
+          * `9` - Core DNS plugins
+          * `10` - Keptn integrations
+          * `11` - Tekton pipelines
+          * `12` - Container images
+          * `13` - Kubewarden policies
+          * `14` - Gatekeeper policies
+          * `15` - Kyverno policies
+          * `16` - Knative client plugins
+          * `17` - Backstage plugins
+          * `18` - Argo templates
+          * `19` - KubeArmor templates
+          * `20` - KCL packages
+          * `21` - Headlamp plugins
+          * `22` - Inspektor gadgets
+          * `23` - Tekton stepactions
+          * `24` - Meshery designs
+          * `25` - Opencost plugins
+          * `26` - Radius recipes
+          * `27` - Bootable containers
+          * `28` - Kagent agents
+    PackageNameParam:
+      in: path
+      name: packageName
+      schema:
+        type: string
+        example: pkg1
+      required: true
+      description: Package name
+    RepoKindParam:
+      in: path
+      name: repoKindParam
+      schema:
+        $ref: "#/components/schemas/RepositoryKindParam"
+      required: true
+      description: Package kind name
+    RepoNameQueryParam:
+      in: query
+      name: name
+      schema:
+        type: string
+        example: repo-name
+      required: false
+      description: Repository name
+    RepoNameParam:
+      in: path
+      name: repoName
+      schema:
+        type: string
+        example: repoName
+      required: true
+      description: Repository name
+    ResourceKindNameParam:
+      in: path
+      name: resourceKind
+      schema:
+        $ref: "#/components/schemas/ResourceKindName"
+      required: true
+      description: Resource kind name
+    TSQueryWebParam:
+      in: query
+      name: ts_query_web
+      schema:
+        type: string
+        example: database
+      required: false
+      description: Text search query (websearch format)
+    TSQueryParam:
+      in: query
+      name: ts_query
+      schema:
+        type: string
+        example: (automation | configuration)
+      required: false
+      description: >-
+        Text search query. Search terms can be combined using the syntax allowed
+        by the PostgreSQL websearch_to_tsquery function. See
+        https://www.postgresql.org/docs/current/textsearch-controls.html
+        (12.3.2. Parsing Queries) for more details.
+    UrlQueryParam:
+      in: query
+      name: url
+      schema:
+        type: string
+        example: https://repo2.com
+      required: false
+      description: Repository url
+    UsersListParam:
+      in: query
+      name: user
+      schema:
+        type: array
+        items:
+          type: string
+        example:
+          - user1
+          - user2
+      required: false
+      description: List of aliases
+    UserAliasParam:
+      in: path
+      name: userAlias
+      schema:
+        type: string
+        example: alias
+      required: true
+      description: User alias
+    VersionParam:
+      in: path
+      name: version
+      schema:
+        type: string
+        example: 1.0.0
+      required: true
+      description: Package version
+    WebhookIDParam:
+      in: path
+      name: webhookID
+      schema:
+        type: string
+        format: uuid
+      required: true
+      description: Webhook ID
+  responses:
+    BadRequest:
+      description: The request sent was not valid
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Created:
+      description: The request has succeeded and has led to the creation of a resource
+    GoneError:
+      description: The code provided has expired
+    Forbidden:
+      description: The user does not have permission to perform the requested operation
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    InternalServerError:
+      description: >-
+        The server encountered an unexpected condition that prevented it from
+        fulfilling the request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NoContent:
+      description: "The request has succeeded, no content returned"
+    NotFoundResponse:
+      description: The requested resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    TooManyRequests:
+      description: The user has sent too many requests in a given amount of time
+    UnauthorizedError:
+      description: Valid authentication credentials not provided
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  requestBodies:
+    SubscriptionBody:
+      description: Subscription request body
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              package_id:
+                type: string
+                format: uuid
+              event_kind:
+                $ref: "#/components/schemas/EventKindId"
+            required:
+              - package_id
+              - event_kind
+    OptOutBody:
+      description: Opt-out entry request body
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              repository_id:
+                type: string
+                format: uuid
+              event_kind:
+                $ref: "#/components/schemas/EventKindId"
+            required:
+              - repository_id
+              - event_kind
+    RepositoryBody:
+      description: Repository request body
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              kind:
+                $ref: "#/components/schemas/RepositoryKind"
+              name:
+                type: string
+                example: repo1
+              display_name:
+                type: string
+                example: Repo 1
+              url:
+                type: string
+                example: http://repo-url.com
+    WebhookBody:
+      description: Webhook body
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/WebhookSummaryWithPackages"

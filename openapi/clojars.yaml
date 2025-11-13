@@ -1,0 +1,185 @@
+openapi: 3.0.3
+info:
+  title: Clojars API
+  description: |
+    Clojars API for Clojure packages and artifacts.
+
+    Repository for Clojure libraries and tools.
+  version: 1.0.0
+  contact:
+    name: Clojars
+    url: https://github.com/clojars/clojars-web
+  license:
+    name: Eclipse Public License 1.0
+
+servers:
+  - url: https://clojars.org/api
+    description: Clojars API
+
+paths:
+  /artifacts/{artifact}:
+    get:
+      summary: Get artifact metadata
+      operationId: getArtifact
+      tags:
+        - Artifacts
+      parameters:
+        - name: artifact
+          in: path
+          required: true
+          description: Artifact name
+          schema:
+            type: string
+          example: compojure
+      responses:
+        '200':
+          description: Artifact metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artifact'
+
+  /artifacts/{group}/{artifact}:
+    get:
+      summary: Get scoped artifact metadata
+      operationId: getScopedArtifact
+      tags:
+        - Artifacts
+      parameters:
+        - name: group
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: artifact
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Artifact metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artifact'
+
+  /groups/{group}:
+    get:
+      summary: Get group metadata
+      operationId: getGroup
+      tags:
+        - Groups
+      parameters:
+        - name: group
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Group metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+
+  /users/{username}:
+    get:
+      summary: Get user information
+      operationId: getUser
+      tags:
+        - Users
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /release-feed:
+    get:
+      summary: Get release feed
+      operationId: getReleaseFeed
+      tags:
+        - Releases
+      parameters:
+        - name: from
+          in: query
+          description: Timestamp to get releases from
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Release feed (max 500 results)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  next_from:
+                    type: integer
+                  releases:
+                    type: array
+                    items:
+                      type: object
+
+components:
+  schemas:
+    Artifact:
+      type: object
+      properties:
+        group_name:
+          type: string
+        jar_name:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+        downloads:
+          type: integer
+        homepage:
+          type: string
+          format: uri
+        recent_versions:
+          type: array
+          items:
+            type: object
+
+    Group:
+      type: object
+      properties:
+        name:
+          type: string
+        artifacts:
+          type: array
+          items:
+            type: string
+
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+        groups:
+          type: array
+          items:
+            type: string
+
+tags:
+  - name: Artifacts
+    description: Clojure artifacts
+  - name: Groups
+    description: Artifact groups
+  - name: Users
+    description: User information
+  - name: Releases
+    description: Release feed

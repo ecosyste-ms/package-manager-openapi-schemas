@@ -1,0 +1,135 @@
+openapi: 3.0.3
+info:
+  title: Docker Hub API
+  description: |
+    Docker Hub API for container image repositories.
+
+    Access metadata, tags, and image information from Docker Hub.
+  version: 2.0.0
+  contact:
+    name: Docker Support
+    url: https://docs.docker.com/
+  license:
+    name: Apache License 2.0
+
+servers:
+  - url: https://hub.docker.com/v2
+    description: Docker Hub API v2
+
+paths:
+  /repositories/{namespace}/{repository}:
+    get:
+      summary: Get repository metadata
+      operationId: getRepository
+      tags:
+        - Repositories
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          description: Namespace (user or organization)
+          schema:
+            type: string
+          example: library
+        - name: repository
+          in: path
+          required: true
+          description: Repository name
+          schema:
+            type: string
+          example: nginx
+      responses:
+        '200':
+          description: Repository metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Repository'
+
+  /repositories/{namespace}/{repository}/tags:
+    get:
+      summary: List repository tags
+      operationId: listTags
+      tags:
+        - Tags
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: repository
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            maximum: 100
+      responses:
+        '200':
+          description: Tag list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagList'
+
+components:
+  schemas:
+    Repository:
+      type: object
+      properties:
+        name:
+          type: string
+        namespace:
+          type: string
+        description:
+          type: string
+        pull_count:
+          type: integer
+        star_count:
+          type: integer
+        last_updated:
+          type: string
+          format: date-time
+
+    TagList:
+      type: object
+      properties:
+        count:
+          type: integer
+        next:
+          type: string
+          format: uri
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+
+    Tag:
+      type: object
+      properties:
+        name:
+          type: string
+        full_size:
+          type: integer
+        images:
+          type: array
+          items:
+            type: object
+        last_updated:
+          type: string
+          format: date-time
+
+tags:
+  - name: Repositories
+    description: Repository metadata
+  - name: Tags
+    description: Image tags

@@ -1,0 +1,126 @@
+openapi: 3.0.3
+info:
+  title: Deno Land API
+  description: |
+    Deno Land API for Deno modules.
+
+    Module registry for Deno JavaScript/TypeScript runtime.
+  version: 2.0.0
+  contact:
+    name: Deno Support
+    url: https://deno.com/
+  license:
+    name: MIT
+
+servers:
+  - url: https://apiland.deno.dev/v2
+    description: Deno Land API v2
+
+paths:
+  /modules:
+    get:
+      summary: List modules
+      operationId: listModules
+      tags:
+        - Modules
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Module list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModuleSummary'
+
+  /modules/{name}:
+    get:
+      summary: Get module metadata
+      operationId: getModule
+      tags:
+        - Modules
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          example: oak
+      responses:
+        '200':
+          description: Module metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Module'
+
+components:
+  schemas:
+    ModuleSummary:
+      type: object
+      properties:
+        name:
+          type: string
+          example: oak
+        description:
+          type: string
+        latest_version:
+          type: string
+          example: v12.6.0
+        versions:
+          type: array
+          items:
+            type: string
+        star_count:
+          type: integer
+        popularity_score:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: object
+            properties:
+              kind:
+                type: string
+              value:
+                type: string
+
+    Module:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        latest_version:
+          type: string
+        versions:
+          type: array
+          items:
+            type: string
+        star_count:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+
+tags:
+  - name: Modules
+    description: Module metadata

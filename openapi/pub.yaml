@@ -1,0 +1,477 @@
+openapi: 3.0.3
+info:
+  title: Pub.dev API
+  description: |
+    The Pub.dev API provides programmatic access to Dart and Flutter package metadata,
+    versions, and pubspec information.
+
+    This schema is based on the actual API implementation used by https://packages.ecosyste.ms
+
+    **Base URLs:**
+    - API: `https://pub.dev/api`
+    - Downloads: `https://pub.dev/packages`
+
+    **Authentication:** Not required for public packages
+
+    **Package Format:** pubspec.yaml based metadata
+
+    **Official Documentation:** https://pub.dev/help/api
+  version: 1.0.0
+  contact:
+    name: Pub.dev Support
+    url: https://pub.dev/help
+  license:
+    name: BSD-3-Clause
+
+servers:
+  - url: https://pub.dev/api
+    description: Pub.dev API
+
+paths:
+  /packages:
+    get:
+      summary: List packages
+      description: |
+        Returns a paginated list of packages.
+        Results can be sorted by various criteria.
+      operationId: listPackages
+      tags:
+        - Packages
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-indexed)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: sort
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum:
+              - updated
+              - created
+              - popularity
+            default: updated
+      responses:
+        '200':
+          description: Package list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackageList'
+
+  /packages/{package}:
+    get:
+      summary: Get package metadata
+      description: |
+        Retrieves complete metadata for a package including latest version,
+        all versions, and pubspec data.
+      operationId: getPackage
+      tags:
+        - Packages
+      parameters:
+        - name: package
+          in: path
+          required: true
+          description: Package name
+          schema:
+            type: string
+          examples:
+            flutter_bloc:
+              value: flutter_bloc
+              summary: State management library
+            http:
+              value: http
+              summary: HTTP client
+      responses:
+        '200':
+          description: Package metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+        '404':
+          description: Package not found
+
+  /packages/{package}/versions/{version}:
+    get:
+      summary: Get specific version details
+      description: |
+        Retrieves metadata for a specific version including pubspec
+        and download URLs.
+      operationId: getPackageVersion
+      tags:
+        - Versions
+      parameters:
+        - name: package
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          description: Semantic version
+          schema:
+            type: string
+          example: "1.0.0"
+      responses:
+        '200':
+          description: Version details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionDetails'
+        '404':
+          description: Package or version not found
+
+  /package-names:
+    get:
+      summary: Get all package names
+      description: Returns a simple list of all package names on pub.dev
+      operationId: getPackageNames
+      tags:
+        - Packages
+      responses:
+        '200':
+          description: Package name list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  packages:
+                    type: array
+                    items:
+                      type: string
+                    example: ["http", "provider", "flutter_bloc"]
+                  next_url:
+                    type: string
+                    format: uri
+                    nullable: true
+
+  /packages/{package}/metrics:
+    get:
+      summary: Get package metrics
+      description: |
+        Retrieves package health metrics including popularity,
+        likes, and pub points.
+      operationId: getPackageMetrics
+      tags:
+        - Metrics
+      parameters:
+        - name: package
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Package metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackageMetrics'
+
+  /packages/{package}/publisher:
+    get:
+      summary: Get package publisher
+      description: |
+        Retrieves verified publisher information if the package
+        is published under a verified publisher.
+      operationId: getPublisher
+      tags:
+        - Publishers
+      parameters:
+        - name: package
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Publisher information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publisher'
+        '404':
+          description: No verified publisher
+
+components:
+  schemas:
+    PackageList:
+      type: object
+      description: Paginated list of packages
+      properties:
+        next_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL for next page
+          example: https://pub.dev/api/packages?page=2
+        packages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PackageSummary'
+
+    PackageSummary:
+      type: object
+      description: Abbreviated package information
+      required:
+        - name
+        - latest
+      properties:
+        name:
+          type: string
+          example: http
+        latest:
+          $ref: '#/components/schemas/LatestVersion'
+
+    Package:
+      type: object
+      description: Complete package metadata
+      required:
+        - name
+        - latest
+        - versions
+      properties:
+        name:
+          type: string
+          example: http
+        latest:
+          $ref: '#/components/schemas/LatestVersion'
+        versions:
+          type: array
+          description: All published versions
+          items:
+            $ref: '#/components/schemas/Version'
+        isDiscontinued:
+          type: boolean
+          description: Whether package is discontinued
+        replacedBy:
+          type: string
+          description: Replacement package name
+        publisherId:
+          type: string
+          description: Verified publisher domain
+          example: dart.dev
+
+    LatestVersion:
+      type: object
+      description: Latest version information
+      required:
+        - version
+        - pubspec
+      properties:
+        version:
+          type: string
+          example: "1.0.0"
+        pubspec:
+          $ref: '#/components/schemas/Pubspec'
+        archive_url:
+          type: string
+          format: uri
+          description: Download URL for .tar.gz archive
+          example: https://pub.dartlang.org/packages/http/versions/1.0.0.tar.gz
+        package_url:
+          type: string
+          format: uri
+          example: https://pub.dartlang.org/api/packages/http
+        url:
+          type: string
+          format: uri
+          example: https://pub.dartlang.org/api/packages/http/versions/1.0.0
+        published:
+          type: string
+          format: date-time
+          description: Publication timestamp
+
+    Version:
+      type: object
+      description: Package version summary
+      properties:
+        version:
+          type: string
+          example: "0.13.5"
+        published:
+          type: string
+          format: date-time
+        archive_url:
+          type: string
+          format: uri
+        retracted:
+          type: boolean
+          description: Whether this version is retracted
+
+    VersionDetails:
+      type: object
+      description: Detailed version information
+      allOf:
+        - $ref: '#/components/schemas/LatestVersion'
+        - type: object
+          properties:
+            retracted:
+              type: boolean
+
+    Pubspec:
+      type: object
+      description: Package specification (pubspec.yaml)
+      required:
+        - name
+        - version
+      properties:
+        name:
+          type: string
+          example: http
+        version:
+          type: string
+          example: "1.0.0"
+        description:
+          type: string
+          example: A composable, multi-platform, Future-based API for HTTP requests
+        homepage:
+          type: string
+          format: uri
+          nullable: true
+          example: https://github.com/dart-lang/http
+        repository:
+          type: string
+          format: uri
+          nullable: true
+          description: Source repository URL
+          example: https://github.com/dart-lang/http
+        issue_tracker:
+          type: string
+          format: uri
+          nullable: true
+          description: Issue tracker URL
+        documentation:
+          type: string
+          format: uri
+          nullable: true
+          description: Documentation URL
+        environment:
+          type: object
+          description: SDK version constraints
+          properties:
+            sdk:
+              type: string
+              example: ">=2.12.0 <3.0.0"
+            flutter:
+              type: string
+              example: ">=1.17.0"
+        dependencies:
+          type: object
+          description: Runtime dependencies
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: object
+          example:
+            flutter:
+              sdk: flutter
+            http_parser: "^4.0.0"
+        dev_dependencies:
+          type: object
+          description: Development dependencies
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: object
+        flutter:
+          type: object
+          nullable: true
+          description: Flutter-specific configuration
+          properties:
+            plugin:
+              type: object
+              description: Flutter plugin configuration
+            assets:
+              type: array
+              items:
+                type: string
+            uses-material-design:
+              type: boolean
+        platforms:
+          type: object
+          description: Supported platforms
+          properties:
+            android:
+              type: object
+              nullable: true
+            ios:
+              type: object
+              nullable: true
+            linux:
+              type: object
+              nullable: true
+            macos:
+              type: object
+              nullable: true
+            web:
+              type: object
+              nullable: true
+            windows:
+              type: object
+              nullable: true
+        executables:
+          type: object
+          description: Executable scripts
+          additionalProperties:
+            type: string
+            nullable: true
+
+    PackageMetrics:
+      type: object
+      description: Package quality and popularity metrics
+      properties:
+        score:
+          type: object
+          properties:
+            grantedPoints:
+              type: integer
+              description: Points earned
+            maxPoints:
+              type: integer
+              description: Maximum possible points
+            likeCount:
+              type: integer
+              description: Number of likes
+            popularityScore:
+              type: number
+              description: Popularity score (0-1)
+            tags:
+              type: array
+              description: Package tags (sdk, platform, runtime)
+              items:
+                type: string
+
+    Publisher:
+      type: object
+      description: Verified publisher information
+      properties:
+        publisherId:
+          type: string
+          example: dart.dev
+        websiteUrl:
+          type: string
+          format: uri
+        contactEmail:
+          type: string
+          format: email
+        description:
+          type: string
+
+tags:
+  - name: Packages
+    description: Package metadata and discovery
+  - name: Versions
+    description: Version information
+  - name: Metrics
+    description: Package metrics and scores
+  - name: Publishers
+    description: Verified publishers
