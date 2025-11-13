@@ -12,9 +12,10 @@ info:
     - Static Files: `https://static.crates.io/crates`
     - Documentation: `https://docs.rs`
 
-    **Authentication:** API token required for publishing and owner management
+    **Authentication:** API token required for publishing and owner management;
+    a user-agent that identifies the application required for all API requests
 
-    **Rate Limiting:** Not officially documented, please be respectful
+    **Rate Limiting:** 1 request per second
 
     **Official Documentation:** https://crates.io/data-access
   version: 1.0.0
