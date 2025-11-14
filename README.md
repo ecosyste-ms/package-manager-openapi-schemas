@@ -14,7 +14,7 @@ Initially extract from [packages.ecosyste.ms](https://github.com/ecosyste-ms/pac
 | **PyPI** | pypi.org | [`pypi.yaml`](openapi/pypi.yaml) | - |
 | **Maven** | repo1.maven.org | [`maven.yaml`](openapi/maven.yaml) | - |
 | **Packagist** | packagist.org | [`packagist.yaml`](openapi/packagist.yaml) | - |
-| **Cargo** | crates.io | [`cargo.json`](openapi/cargo.json) | [OpenAPI 3.1.0](https://crates.io/api/openapi.json) |
+| **Rust** | crates.io | [`crates-io.json`](openapi/crates-io.json) | [OpenAPI 3.1.0](https://crates.io/api/openapi.json) |
 | **RubyGems** | rubygems.org | [`rubygems.yaml`](openapi/rubygems.yaml) | - |
 | **Pub** | pub.dev | [`pub.yaml`](openapi/pub.yaml) | - |
 | **Hex** | hex.pm | [`hex.yaml`](openapi/hex.yaml) | - |
