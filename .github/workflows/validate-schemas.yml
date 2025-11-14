@@ -5,10 +5,12 @@ on:
     branches: [main]
     paths:
       - 'openapi/**/*.yaml'
+      - 'openapi/**/*.json'
   pull_request:
     branches: [main]
     paths:
       - 'openapi/**/*.yaml'
+      - 'openapi/**/*.json'
 
 jobs:
   validate:
@@ -29,7 +31,9 @@ jobs:
 
       - name: Validate all schemas
         run: |
-          for schema in openapi/*.yaml; do
-            echo "Validating $(basename $schema)..."
-            swagger-cli validate "$schema"
+          for schema in openapi/*.yaml openapi/*.json; do
+            if [ -f "$schema" ]; then
+              echo "Validating $(basename $schema)..."
+              swagger-cli validate "$schema"
+            fi
           done

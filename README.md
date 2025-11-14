@@ -14,11 +14,11 @@ Initially extract from [packages.ecosyste.ms](https://github.com/ecosyste-ms/pac
 | **PyPI** | pypi.org | [`pypi.yaml`](openapi/pypi.yaml) |
 | **Maven** | repo1.maven.org | [`maven.yaml`](openapi/maven.yaml) |
 | **Packagist** | packagist.org | [`packagist.yaml`](openapi/packagist.yaml) |
-| **Cargo** | crates.io | [`cargo.yaml`](openapi/cargo.yaml) |
+| **Cargo** | crates.io | [`cargo.json`](openapi/cargo.json) |
 | **RubyGems** | rubygems.org | [`rubygems.yaml`](openapi/rubygems.yaml) |
 | **Pub** | pub.dev | [`pub.yaml`](openapi/pub.yaml) |
 | **Hex** | hex.pm | [`hex.yaml`](openapi/hex.yaml) |
-| **OpenVSX** | open-vsx.org | [`openvsx.yaml`](openapi/openvsx.yaml) |
+| **OpenVSX** | open-vsx.org | [`openvsx.json`](openapi/openvsx.json) |
 | **Deno** | apiland.deno.dev | [`deno.yaml`](openapi/deno.yaml) |
 | **Homebrew** | formulae.brew.sh | [`homebrew.yaml`](openapi/homebrew.yaml) |
 | **CPAN** | metacpan.org | [`cpan.yaml`](openapi/cpan.yaml) |
@@ -39,7 +39,7 @@ Initially extract from [packages.ecosyste.ms](https://github.com/ecosyste-ms/pac
 
 ```bash
 openapi-generator-cli generate -i openapi/npm.yaml -g python -o npm-client
-openapi-generator-cli generate -i openapi/cargo.yaml -g typescript-axios -o cargo-client
+openapi-generator-cli generate -i openapi/cargo.json -g typescript-axios -o cargo-client
 # 50+ languages supported
 ```
 
