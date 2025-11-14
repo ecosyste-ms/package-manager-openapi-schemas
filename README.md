@@ -70,3 +70,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
+
+Note: Schemas sourced from official specifications (marked in the table above) retain their original licenses as defined in the respective spec files.
