@@ -21,19 +21,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          node-version: '20'
+          python-version: '3.x'
 
-      - name: Install Swagger CLI
-        run: npm install -g @apidevtools/swagger-cli
+      - name: Install OpenAPI Spec Validator
+        run: pip install openapi-spec-validator
 
       - name: Validate all schemas
         run: |
           for schema in openapi/*.yaml openapi/*.json; do
             if [ -f "$schema" ]; then
               echo "Validating $(basename $schema)..."
-              swagger-cli validate "$schema"
+              python -m openapi_spec_validator "$schema"
             fi
           done
